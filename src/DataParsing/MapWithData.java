@@ -4,6 +4,7 @@ import COMSETsystem.*;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
@@ -68,14 +69,23 @@ public class MapWithData {
  
 		CSVNewYorkParser parser = new CSVNewYorkParser(resourceFile, zoneId);
 		ArrayList<Resource> resourcesParsed = parser.parse();
+
 		try {
+
+			//modified
+//			PrintWriter writer = new PrintWriter("pickup_dropof_road_id_201606.csv", "UTF-8");
+//			writer.println("pickup_roadId,dropoff_roadId");
+			//
             for (Resource resource : resourcesParsed) {
 				// map matching
 				LocationOnRoad pickupMatch = mapMatch(resource.getPickupLon(), resource.getPickupLat());
 				LocationOnRoad dropoffMatch = mapMatch(resource.getDropoffLon(), resource.getDropoffLat());
-
+				//modified
+				//writer.println(pickupMatch.road.id+","+dropoffMatch.road.id);
+				//
 				ResourceEvent ev = new ResourceEvent(pickupMatch, dropoffMatch, resource.getTime(), simulator);
 				events.add(ev);
+
 
 				//  track earliestResourceTime and latestResourceTime
 				if (resource.getTime() < earliestResourceTime) {
@@ -85,6 +95,9 @@ public class MapWithData {
 					latestResourceTime = resource.getTime() + simulator.ResourceMaximumLifeTime + ev.tripTime;
 				}
 			}
+            //modified
+            //writer.close();
+            //
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -1,6 +1,7 @@
 package DataParsing;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.time.ZoneId;
@@ -68,6 +69,14 @@ public class CSVNewYorkParser {
 	public ArrayList<Resource> parse() {
 
 		try {
+			/*
+			modification: to get trial data parse lines
+			 */
+			//PrintWriter writer = new PrintWriter("inpolygon_row_number_201606.txt", "UTF-8");
+
+			/*
+			end of modification
+			 */
 			Scanner sc = new Scanner(new File(path));   //scanner will scan the file specified by path
 			sc.useDelimiter(",|\n");    //scanner will skip over "," and "\n" found in file
 			sc.nextLine(); // skip the header
@@ -77,6 +86,9 @@ public class CSVNewYorkParser {
 			//per line of input file we will create a new TimestampAgRe object
 			// and save the 4 tokens of each line in the corresponding field of the TimestampAgRe object
 			while (sc.hasNext()) {
+
+
+
 				sc.next();// skip first VendorID
 				long time = dateConversion(sc.next());
 				sc.next();// skip these fields
@@ -91,11 +103,20 @@ public class CSVNewYorkParser {
 				sc.nextLine(); //skip rest of fileds in this line
 				// Only keep the resources such that both pickup location and dropoff location are within the bounding polygon.
 				if (!(MapCreator.insidePolygon(pickupLon, pickupLat) && MapCreator.insidePolygon(dropoffLon, dropoffLat))) {
+					//modification
+					//writer.write('0');
 					continue;
 				}
+				//modification
+//				else{//trial-data-parse modification
+//					writer.write('1');
+//				}
+
 				resources.add(new Resource(pickupLat, pickupLon, dropoffLat, dropoffLon, time)); //create new resource with the above fields
 			}
 			sc.close();
+			//modification
+			//writer.close();
 		} catch (Exception e) {
 
 			e.printStackTrace();
