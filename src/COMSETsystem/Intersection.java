@@ -158,7 +158,9 @@ public class Intersection implements Comparable<Intersection> {
 	 * @return string of longitude and latitude
 	 */
 	public String toString() {
-		return "(" + latitude + "," + longitude + ")";
+
+		//return "(" + latitude + "," + longitude + ")";
+		return Long.toString(this.id);
 	}
 
 	/**
