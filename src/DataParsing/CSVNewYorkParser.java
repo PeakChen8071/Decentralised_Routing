@@ -2,7 +2,11 @@ package DataParsing;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Scanner;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -58,9 +62,18 @@ public class CSVNewYorkParser {
 		LocalDateTime ldt = LocalDateTime.parse(timestamp, dtf);
 		ZonedDateTime zdt = ZonedDateTime.of(ldt, zoneId);
 		l = zdt.toEpochSecond(); //Returns Linux epoch, i.e., the number of seconds since January 1, 1970, 00:00:00 GMT until time specified in zdt
+		//System.out.println(dateReverseConversion(l));
 		return l;
 	}
 
+	private String dateReverseConversion(long time){
+		Instant i = Instant.ofEpochSecond(time);
+		ZonedDateTime z = ZonedDateTime.ofInstant(i, zoneId);
+
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		String formattedString = z.format(formatter);
+		return formattedString;
+	}
 	/**
 	 * Parse the csv file.
 	 * 

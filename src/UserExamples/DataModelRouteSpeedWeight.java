@@ -6,25 +6,40 @@ import COMSETsystem.Road;
 
 import java.util.*;
 
-public class DataModelRouteWeight {
+public class DataModelRouteSpeedWeight {
     // A reference to the map.
     CityMap map;
 
-    HashMap<Intersection, HashMap<String, Double>> probabilityTable;
+    private HashMap<Intersection, HashMap<String, Double>> probabilityTable;
 
+    int choosenCounter = 0;
+    int allCounter = 0;
 
     int layer;
 
-    public DataModelRouteWeight(CityMap map, int layer) {
+    public DataModelRouteSpeedWeight(CityMap map, int layer) {
         this.map = map;
         this.probabilityTable = new HashMap<>();
         this.layer = layer;
     }
 
     //calls planRoute to get the next set of intersections to travel.
-    public ArrayList<Intersection> planRoute(Intersection currentIntersection){
-        HashMap<String, Double> pathTable = weightedSpeedOfNeighbours(currentIntersection);
+    public ArrayList<Intersection> planRoute(Intersection currentIntersection, long time){
+        allCounter++;
+        if(allCounter%10000==0){
+            System.out.println(choosenCounter);
+            System.out.println("Rate of choosing the most likely one: "+(double)choosenCounter/allCounter);
+        }
+        HashMap<String, Double> pathTable = weightedSpeedOfNeighbours(currentIntersection, time);
+        Double most_likely = Double.MIN_VALUE;
+        String most_likely_path = "";
+        for(String path:pathTable.keySet()){
+            if (pathTable.get(path)>most_likely){
+                most_likely = pathTable.get(path);
+                most_likely_path = path;
+            }
 
+        }
 
         double totalWeight = 0.0d;
         List<Map.Entry<String,Double>> totalSpeeds = new ArrayList<>();
@@ -34,9 +49,9 @@ public class DataModelRouteWeight {
         //in the hashmap, path is encoded as a string: "id1 id2 id3... idn", id names seperated by space.
         for (String encodedPaths: pathTable.keySet()){
 
-            double netspeed = pathTable.get(encodedPaths);
-            totalWeight += netspeed;
-            Map.Entry<String,Double> pair = new AbstractMap.SimpleEntry<>(encodedPaths, netspeed);
+            double pathWeight = pathTable.get(encodedPaths);
+            totalWeight += pathWeight;
+            Map.Entry<String,Double> pair = new AbstractMap.SimpleEntry<>(encodedPaths, pathWeight);
             totalSpeeds.add(pair);
         }
 
@@ -54,12 +69,17 @@ public class DataModelRouteWeight {
         }
 
         String choosenPath = totalSpeeds.get(randomIndex).getKey();
+
+        if (choosenPath == most_likely_path){
+            choosenCounter++;
+        }
         ArrayList<Intersection> route = decodePath(choosenPath); //decodes string key back to a list of intersections.
         route.remove(0); //make sure the first intersection is not itself.
+
         return route;
 
     }
-    public HashMap<String, Double> weightedSpeedOfNeighbours(Intersection root){
+    public HashMap<String, Double> weightedSpeedOfNeighbours(Intersection root, long time){
         if (probabilityTable.containsKey(root)){
             return probabilityTable.get(root); //memorization.
         }
@@ -69,7 +89,7 @@ public class DataModelRouteWeight {
         ArrayList<Intersection> path = new ArrayList<>();
         path.add(root);//root.
 
-        DFS(root, layer, 0, path, speedTable); //calls this recursive function to compute the tree.
+        DFS(root, layer, 0, path, speedTable, time); //calls this recursive function to compute the tree.
 
         //System.out.println("Root: {" + root.id + "} has neibours: {"+root.getAdjacentFrom().toString()+"}, speed map: "+ speedTable.toString());
 
@@ -78,7 +98,7 @@ public class DataModelRouteWeight {
     }
 
 
-    public void DFS(Intersection intersection, int layer, double totalSpeed, ArrayList<Intersection> path, HashMap<String, Double> speedWeight){
+    public void DFS(Intersection intersection, int layer, double totalSpeed, ArrayList<Intersection> path, HashMap<String, Double> speedWeight, long time){
         //if leaf or end of layer.
         if (layer==0 || intersection.getAdjacentFrom().size()==0){
 
@@ -103,7 +123,7 @@ public class DataModelRouteWeight {
 
             ArrayList<Intersection> new_path = (ArrayList<Intersection>) path.clone();
             new_path.add(n);
-            DFS(n, layer-1, totalSpeed + averageSpeed, new_path, speedWeight);
+            DFS(n, layer-1, totalSpeed + averageSpeed, new_path, speedWeight, time);
         }
     }
 
@@ -111,7 +131,7 @@ public class DataModelRouteWeight {
 
 
 
-    private String encodePath(ArrayList<Intersection> path){
+    protected String encodePath(ArrayList<Intersection> path){
         //input: a list of intersections ( a route/path)
         //output: a string representation of the route/path so it can be used as a key.
         StringBuilder sb = new StringBuilder();
@@ -122,7 +142,7 @@ public class DataModelRouteWeight {
         return sb.toString();
     }
 
-    private ArrayList<Intersection> decodePath(String pathStr){
+    protected ArrayList<Intersection> decodePath(String pathStr){
         //reverse of the encodePath.
         StringBuilder sb = new StringBuilder();
         ArrayList<Intersection> res = new ArrayList<>();

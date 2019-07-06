@@ -2,6 +2,7 @@ package UserExamples;
 
 import COMSETsystem.*;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,14 +20,14 @@ public class AgentRandomWalkWithRouteWeight extends BaseAgent {
     Random rnd;
 
     // a static singleton object of a data model, shared by all agents
-    static DataModelRouteWeight dataModel = null;
+    static DataModelRouteSpeedWeight dataModel = null;
 
     public AgentRandomWalkWithRouteWeight(long id, CityMap map) {
         super(id, map);
         if (dataModel == null) {
 
-            //Its a O(2^N) method.. so don't put a number greater than 20.
-            dataModel = new DataModelRouteWeight(map, 5);
+            //Its a O(2^N) method.. so layer number is within [3~15]
+            dataModel = new DataModelRoutePickupWeight(map, 3);
         }
     }
 
@@ -36,7 +37,7 @@ public class AgentRandomWalkWithRouteWeight extends BaseAgent {
         route.clear();
         Intersection currentIntersection = currentLocation.road.to;
 
-        ArrayList<Intersection> nextIntersection = dataModel.planRoute(currentIntersection);
+        ArrayList<Intersection> nextIntersection = dataModel.planRoute(currentIntersection, currentTime);
 
         route.addAll(nextIntersection);
     }
@@ -57,6 +58,8 @@ public class AgentRandomWalkWithRouteWeight extends BaseAgent {
     @Override
     public void assignedTo(LocationOnRoad currentLocation, long currentTime, long resourceId, LocationOnRoad resourcePikcupLocation, LocationOnRoad resourceDropoffLocation) {
         // Clear the current route.
+
+
         route.clear();
 
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Agent " + this.id + " assigned to resource " + resourceId);
