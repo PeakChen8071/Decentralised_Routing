@@ -14,26 +14,28 @@ public class DataModelRoutePickupWeight extends DataModelRouteSpeedWeight {
     RoadTimePickupProbability pickUpTimeMap;
     CSVNYRoadTimeParser parser;
 
+
     public DataModelRoutePickupWeight(CityMap map, int layer) {
         super(map, layer);
         System.out.println("evoked");
         parser = new CSVNYRoadTimeParser("trial_data/count_probability_201606_formatted.csv", super.map.computeZoneId());
         pickUpTimeMap = parser.parse();
+
     }
 
-    @Override
-    public HashMap<String, Double> weightedSpeedOfNeighbours(Intersection root, long time){
-        //this time no memorization because assuming there won't be too many repeating results within the time frame.
-        HashMap<String, Double> speedTable = new HashMap<>();
-
-        ArrayList<Intersection> path = new ArrayList<>();
-        path.add(root);//root.
-
-        DFS(root, layer, 0, path, speedTable, time); //calls this recursive function to compute the tree.
-
-        //System.out.println("Root: {" + root.id + "} has neibours: {"+root.getAdjacentFrom().toString()+"}, probability map: "+ speedTable.toString());
-        return speedTable;
-    }
+//    @Override
+//    public HashMap<String, Double> weightedSpeedOfNeighbours(Intersection root, long time){
+//        //this time no memorization because assuming there won't be too many repeating results within the time frame.
+//        HashMap<String, Double> speedTable = new HashMap<>();
+//
+//        ArrayList<Intersection> path = new ArrayList<>();
+//        path.add(root);//root.
+//
+//        DFS(root, layer, 0, path, speedTable, time); //calls this recursive function to compute the tree.
+//
+//        //System.out.println("Root: {" + root.id + "} has neibours: {"+root.getAdjacentFrom().toString()+"}, probability map: "+ speedTable.toString());
+//        return speedTable;
+//    }
 
     @Override
     public void DFS(Intersection intersection, int layer, double totalProbabiltiy, ArrayList<Intersection> path, HashMap<String, Double> speedWeight, long time){

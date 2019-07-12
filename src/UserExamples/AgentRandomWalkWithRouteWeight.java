@@ -27,7 +27,7 @@ public class AgentRandomWalkWithRouteWeight extends BaseAgent {
         if (dataModel == null) {
 
             //Its a O(2^N) method.. so layer number is within [3~15]
-            dataModel = new DataModelRoutePickupWeight(map, 3);
+            dataModel = new DataModelRoutePickupWeight(map, 10);
         }
     }
 

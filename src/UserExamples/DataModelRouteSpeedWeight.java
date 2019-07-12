@@ -4,52 +4,75 @@ import COMSETsystem.CityMap;
 import COMSETsystem.Intersection;
 import COMSETsystem.Road;
 
+import javax.xml.crypto.Data;
+import java.io.FileInputStream;
 import java.util.*;
+
+class DataAtIntersection{
+    HashMap<String, Double> probabilityTable;
+    HashMap<String, Double> epsGreedyTable;
+    public DataAtIntersection (HashMap<String, Double> p,HashMap<String, Double> e) {
+        probabilityTable = p;
+        epsGreedyTable = e;
+    }
+    public HashMap<String, Double>  getProbabilityBySpeed(){
+        return probabilityTable;
+    }
+    public HashMap<String, Double>  getProbabilityByEpsilonGreedy(){
+        return epsGreedyTable;
+    }
+}
 
 public class DataModelRouteSpeedWeight {
     // A reference to the map.
     CityMap map;
 
-    private HashMap<Intersection, HashMap<String, Double>> probabilityTable;
-
-    int choosenCounter = 0;
-    int allCounter = 0;
+    private HashMap<Intersection, DataAtIntersection> cache;
+    //private HashMap<Intersection, HashMap<String, Double>> epsilonGreedyTable;
+    double eps = -1;
 
     int layer;
 
+
     public DataModelRouteSpeedWeight(CityMap map, int layer) {
         this.map = map;
-        this.probabilityTable = new HashMap<>();
+        this.cache = new HashMap<>();
         this.layer = layer;
+
+        if(eps==-1){
+            try {
+                Properties prop = new Properties();
+                prop.load(new FileInputStream("etc/config.properties"));
+                String epsStr = prop.getProperty("eps.current").trim();
+                if (epsStr != null) {
+                    eps = Double.parseDouble(epsStr);
+                }
+            }catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 
     //calls planRoute to get the next set of intersections to travel.
     public ArrayList<Intersection> planRoute(Intersection currentIntersection, long time){
-        allCounter++;
-        if(allCounter%10000==0){
-            System.out.println(choosenCounter);
-            System.out.println("Rate of choosing the most likely one: "+(double)choosenCounter/allCounter);
-        }
-        HashMap<String, Double> pathTable = weightedSpeedOfNeighbours(currentIntersection, time);
-        Double most_likely = Double.MIN_VALUE;
-        String most_likely_path = "";
-        for(String path:pathTable.keySet()){
-            if (pathTable.get(path)>most_likely){
-                most_likely = pathTable.get(path);
-                most_likely_path = path;
-            }
 
-        }
+        DataAtIntersection infoTable = weightedSpeedOfNeighbours(currentIntersection, time);
 
+        HashMap<String, Double> neighboursWeightedByEpsilonGreedy = infoTable.getProbabilityByEpsilonGreedy();
+
+        return getWeightedRandomChoice(neighboursWeightedByEpsilonGreedy);
+
+    }
+    public ArrayList<Intersection> getWeightedRandomChoice(HashMap<String, Double> weights){
         double totalWeight = 0.0d;
         List<Map.Entry<String,Double>> totalSpeeds = new ArrayList<>();
 
         //Randomly select an intersection according to sum of path speed weight.
         //calculate cumulative average speed of roads
         //in the hashmap, path is encoded as a string: "id1 id2 id3... idn", id names seperated by space.
-        for (String encodedPaths: pathTable.keySet()){
+        for (String encodedPaths: weights.keySet()){
 
-            double pathWeight = pathTable.get(encodedPaths);
+            double pathWeight = weights.get(encodedPaths);
             totalWeight += pathWeight;
             Map.Entry<String,Double> pair = new AbstractMap.SimpleEntry<>(encodedPaths, pathWeight);
             totalSpeeds.add(pair);
@@ -70,18 +93,14 @@ public class DataModelRouteSpeedWeight {
 
         String choosenPath = totalSpeeds.get(randomIndex).getKey();
 
-        if (choosenPath == most_likely_path){
-            choosenCounter++;
-        }
+
         ArrayList<Intersection> route = decodePath(choosenPath); //decodes string key back to a list of intersections.
         route.remove(0); //make sure the first intersection is not itself.
-
         return route;
-
     }
-    public HashMap<String, Double> weightedSpeedOfNeighbours(Intersection root, long time){
-        if (probabilityTable.containsKey(root)){
-            return probabilityTable.get(root); //memorization.
+    public DataAtIntersection weightedSpeedOfNeighbours(Intersection root, long time){
+        if (cache.containsKey(root)){
+            return cache.get(root); //memorization.
         }
 
         HashMap<String, Double> speedTable = new HashMap<>();
@@ -91,10 +110,34 @@ public class DataModelRouteSpeedWeight {
 
         DFS(root, layer, 0, path, speedTable, time); //calls this recursive function to compute the tree.
 
-        //System.out.println("Root: {" + root.id + "} has neibours: {"+root.getAdjacentFrom().toString()+"}, speed map: "+ speedTable.toString());
+        HashMap<String, Double> epsTable = getEpsProbabilityTable(speedTable);
 
-        probabilityTable.put(root, speedTable);
-        return speedTable;
+        DataAtIntersection result = new DataAtIntersection(speedTable, epsTable);
+        cache.put(root, result);
+        return result;
+    }
+
+    public HashMap<String, Double> getEpsProbabilityTable(HashMap<String, Double> speedTable){
+        HashMap<String, Double> epsTable = new HashMap<>();
+        double highestRewardProbability = 1;
+        double remainingRewardProbability = 0;
+
+        if(speedTable.size()!= 1){
+            highestRewardProbability = 1 - eps;
+            remainingRewardProbability = eps / (speedTable.size() - 1);
+        }
+        String highestRouteKey = "";
+        Double highestRouteReward = -1.0;
+        for(String s:speedTable.keySet()){
+            Double val = speedTable.get(s);
+            if(highestRouteReward < val){
+                highestRouteReward = val;
+                highestRouteKey = s;
+            }
+            epsTable.put(s, remainingRewardProbability);
+        }
+        epsTable.put(highestRouteKey, highestRewardProbability);
+        return epsTable;
     }
 
 

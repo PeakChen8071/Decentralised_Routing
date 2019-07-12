@@ -42,7 +42,7 @@ public class AgentRandomWalkWithWeight extends AgentRandomWalk{
             //speed is road total length/road total travel time.
             //this is from the definition of road --  check "addLink" function in road.
 
-            double averageSpeed = r.length/r.travelTime;
+            double averageSpeed = Math.pow(2,r.length/r.travelTime);
             totalWeight += averageSpeed;
             Map.Entry<Road,Double> pair = new AbstractMap.SimpleEntry<>(r, averageSpeed);
             roadSpeeds.add(pair);
