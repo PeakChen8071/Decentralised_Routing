@@ -110,25 +110,10 @@ public class AgentRandomWalkEpsilonGreedy extends AgentRandomWalk{
         allCounter++;
         if(allCounter%100000==0){
             System.out.println("% choosen using eps : "+ eps+" = "+(double)choosenCounter/allCounter);
-//            try {
-//                Properties prop = new Properties();
-//                FileInputStream fin = new FileInputStream("etc/config.properties");
-//                prop.load(fin);
-//                double actualEps = (double)choosenCounter/allCounter ;
-//                fin.close();
-//                FileOutputStream fr = new FileOutputStream("etc/config.properties");
-//                prop.setProperty("eps.actual", Double.toString(actualEps));
-//                prop.store(fr, null);
-//            }catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
+
         }
         Map<Long,Double> probability = new LinkedHashMap<>();
-        //{road ID: eps, or (1-eps)/(n-1)}
-        //3 -> {1: 0.2, 2: 0.3: 3:0.5}
-        //eps = 0.5
-        //{1:0.25, 2:0.25, 3:0.5}
-        //{3:1}
+
         double max_prob = -1;
         Road max_rd = null;
         int num_of_intersections = (currentIntersection.getRoadsFrom().size()-1);

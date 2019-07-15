@@ -38,6 +38,7 @@ public class AgentRandomDestination extends BaseAgent {
 		super(id, map);
 		rnd = new Random(id);
 		if (dataModel == null) {
+			//System.out.println(map.intersections().size());
 			dataModel = new DummyDataModel(map);
 		}
 	}
