@@ -60,7 +60,6 @@ public class CSVNYRoadTimeParser {
                 sc.next();// skip totalPickUP;
                 double pickUpProbabiltiy = Double.parseDouble(sc.next());
 
-
                 probabilityMap.addInfo(roadId, time, pickUpProbabiltiy); //create new resource with the above fields
             }
             sc.close();
