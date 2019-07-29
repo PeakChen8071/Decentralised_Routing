@@ -1,5 +1,6 @@
 package COMSETsystem;
 
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,6 +68,24 @@ public class CityMap {
 			intersection.pathTableIndex = index++;
 			intersectionsByPathTableIndex.put(intersection.pathTableIndex, intersection);
 		}
+
+//		try{
+//			PrintWriter writer = new PrintWriter("roadLength.csv", "UTF-8");
+//			writer.println("roadId,roadLength,travelTime");
+//			for(Road r:roads){
+//				writer.print(r.id);
+//				writer.print(",");
+//				writer.print(r.length);
+//				writer.print(",");
+//				writer.print(r.travelTime);
+//				writer.print("\n");
+//			}
+//			writer.close();
+//
+//
+//		}catch (Exception e){
+//			e.printStackTrace();
+//		}
 
 	}
 

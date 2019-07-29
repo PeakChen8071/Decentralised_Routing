@@ -158,7 +158,7 @@ public class Simulator {
 		// map match resources
 		System.out.println("Loading and map-matching resources...");
 		long latestResourceTime = mapWD.createMapWithData(this);
-
+		System.out.println("latest resource time: " + latestResourceTime);
 		// The simulation end time is the expiration time of the last resource.
 		this.simulationEndTime = latestResourceTime;
 

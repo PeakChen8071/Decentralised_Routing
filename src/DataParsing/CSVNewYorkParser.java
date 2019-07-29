@@ -62,7 +62,7 @@ public class CSVNewYorkParser {
 		LocalDateTime ldt = LocalDateTime.parse(timestamp, dtf);
 		ZonedDateTime zdt = ZonedDateTime.of(ldt, zoneId);
 		l = zdt.toEpochSecond(); //Returns Linux epoch, i.e., the number of seconds since January 1, 1970, 00:00:00 GMT until time specified in zdt
-		//System.out.println(dateReverseConversion(l));
+
 		return l;
 	}
 

@@ -1,28 +1,15 @@
 package UserExamples;
 
 import COMSETsystem.*;
-import CustomDataParsing.Cluster;
 import CustomDataParsing.RoadClusterParser;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class AgentQTableDestination extends BaseAgent {
 
-    LinkedList<Intersection> route = new LinkedList<Intersection>();
-
-    // random number generator
-    Random rnd;
-    static int counter = 0;
-    // a static singleton object of a data model, shared by all agents
-    static RoadClusterParser rcp = null;
-    static Cluster cluster;
-    static Set<Integer> clusterIDs;
-    HashMap<Integer, HashMap<Integer, Double>> qTable;
-    static EpsilonGreedyTools epsTool;
-    Integer currentClusterId = -1;
-
-    //qtable:
-    /*     c1  c2  c3  < inner key
+    /* qtable
+     *    c1  c2  c3  < inner key
      * c1 r11 r12 r13  < inner map value
      * c2 r21 r22 r23
      * c3 r31 r32 r33
@@ -30,76 +17,144 @@ public class AgentQTableDestination extends BaseAgent {
      * outer key
      */
 
-    /**
-     * BaseAgent constructor.
-     *
-     * @param id  An id that is unique among all agents and resources
-     * @param map The map
-     */
+    class M{
+        int t_cap;
+        public void setT_cap(long currentTime){
+            t_cap = Cluster.mapTime(currentTime);
+        }
+        public double toDouble(long currentTime){
+            return 0.5*(Math.tanh(Cluster.mapTime(currentTime) - t_cap - 5*60) + 1);
+        }
+    }
+    double[][] qTable; //index 0 is cluster -1. index
+    static double [][] shortestClusterTravelTime;
+    M[] mVector;
+
+    LinkedList<Intersection> route = new LinkedList<>();
+    boolean firstPlanning = true;
+    boolean prevPickup = false;
+
+    Integer internalSearchTime = 0;
+    Integer currentClusterId = 0;
+
+    int currentTimeSlice = 0;
+
+    static int totalClusterNumber;
+    static EpsilonGreedyTools epsTool;
+    static boolean rcpDone = false;
+    static RoadClusterParser rcp = null;
+    static HashMap<Integer, Cluster> clusters;
+    static ClusterTool ct;
+    static ArrayList<Integer> times;
+    static int counter= 0;
+
+
+    int updateRcounter=  0;
+
+
     public AgentQTableDestination(long id, CityMap map) {
         super(id, map);
-        if (rcp==null){
-            rcp = new RoadClusterParser("trial_data/data_20160601.csv", map);
-            cluster = rcp.parse();
-            cluster.calculateInitialReward();
-        }
+
         if (epsTool==null){
-            epsTool = new EpsilonGreedyTools(0.5);
-        }
-        qTable = new HashMap<>();
-        clusterIDs = cluster.getClusterIds();
-        for(Integer i: clusterIDs){
-            HashMap<Integer, Double> qInnerTable = new HashMap<Integer, Double>();
-            for(Integer j:clusterIDs){
-                qInnerTable.put(j, cluster.getClusterInitialReward(j));
-            }
-            qTable.put(i, qInnerTable);
-        }
-        if (counter==0){
-            printQtablePretty();
+
+            epsTool = new EpsilonGreedyTools(0.6);
         }
 
-        counter++;
+        if (rcp==null && rcpDone ==false){
+            rcp = new RoadClusterParser(map);
+            System.out.println("started reading IO");
+            clusters = rcp.parseRoadClusterFile("trial_data/75_RoadCluster.csv");
+            System.out.println("Started Parsing pickupCountTimeSlise");
+            rcp.parseRoadPickupFile("ClusterData/pickupCount_timeslice.csv");
+            System.out.println("Finished reading IO");
+            rcp = null;
+            rcpDone = true;
+            System.out.println("cluster size is:"+clusters.size());
+            totalClusterNumber = clusters.size();
+
+        }
+        if (ct==null){
+            ct = new ClusterTool(map, clusters);
+
+        }
+        if (times==null){
+            times = new ArrayList<>();
+            for(int i = 8*60;i<23*60+45;i+=15){
+                times.add(i);
+            }
+
+        }
+
+        //fill it in the first plan.
+        qTable = new double[totalClusterNumber][totalClusterNumber];
+        mVector = new M[totalClusterNumber];
+        //System.out.println(mVector);
+        for(int i = 0;i<totalClusterNumber;i++){
+            mVector[i] = new M();
+            mVector[i].setT_cap(0);
+        }
 
     }
-    private void printQtablePretty(){
-        StringBuilder sb = new StringBuilder();
-        for (int i:clusterIDs){
-            sb.append("\t");
-            sb.append("c"+i);
-            sb.append("\t");
-        }
-        sb.append("\n");
-        for (int i:clusterIDs){
-            sb.append("c"+i);
-            sb.append("\t");
-            HashMap<Integer, Double> innerTable = qTable.get(i);
-            for(int j:innerTable.keySet()){
-                sb.append(String.format("%.3f", innerTable.get(j)));
-                sb.append("\t");
+
+    public void updateR(long currentTime){
+
+        currentTimeSlice = times.get(0);
+        for(int i = 0;i<totalClusterNumber;i++){
+            for(int j = 0;j<totalClusterNumber;j++){
+                qTable[i][j]= clusters.get(j).getCurrentReward(currentTime);
             }
-            sb.append("\n");
         }
-        System.out.println(sb);
-
     }
-
     @Override
     public void planSearchRoute(LocationOnRoad currentLocation, long currentTime) {
         route.clear();
-        Long c = currentLocation.road.id;
-        currentClusterId = cluster.getClusterID(c);
-        HashMap<Integer, Double> probTable = epsTool.getProbabilityTable(qTable.get(currentClusterId));
-        Integer choosenClusterId = epsTool.getRandomWithWeight(probTable);
 
-        HashSet<Intersection> itxs = cluster.getClusterIntersections(choosenClusterId);
-        if(itxs==null){
-            itxs = cluster.getClusterIntersections(-1);
-            choosenClusterId = -1;
+        //update Qtable
+        if (times.size()>0 && Cluster.mapTime(currentTime) >= times.get(0)){
+            while(Cluster.mapTime(currentTime) >= times.get(0)){
+                times.remove(0);
+            }
+            updateR(currentTime);
+        }
+        if (Cluster.mapTime(currentTime) < times.get(0)){
+
+            updateR(currentTime);
+        }
+
+        if(id==240000) System.out.println(Cluster.mapTime(currentTime)+ " "+updateRcounter+" "+currentTimeSlice);
+        Cluster c = clusters.get(currentClusterId);
+
+        //if plan inside we do nothing.
+        Integer destinationClusterId = currentClusterId;
+
+        //first time planning
+        if (firstPlanning){
+
+            destinationClusterId = initialPlanRoute(currentLocation, currentTime);
+            firstPlanning = false;
+
+        // plan outside due to search time.
+        }else if (internalSearchTime >= c.searchTime){
+
+            updateMvector(currentClusterId, currentTime);
+            updateQTable(currentTime);
+            destinationClusterId = chooseOutsideCluster(currentLocation, currentTime);
+
+        }
+        //ignores the searchtime rule
+        //destinationClusterId = chooseOutsideCluster(currentLocation, currentTime);
+
+
+
+        //planRoute ---- same procedures.
+        HashSet<Intersection> itxs = clusters.get(destinationClusterId).intersections;
+        if(itxs==null || itxs.size()==0){
+            itxs = clusters.get(0).intersections;
+            destinationClusterId = 0;
         }
         Intersection sourceIntersection = currentLocation.road.to;
 
-        System.out.println("Currently Cluster: "+cluster.getIntersectionCluster(sourceIntersection)+", destination Cluster: "+choosenClusterId);
+
         Intersection destinationIntersection = epsTool.getRandomFromSet(itxs);
 
 
@@ -110,13 +165,72 @@ public class AgentQTableDestination extends BaseAgent {
             destinationIntersection = roadsFrom[0].to;
         }
         route = map.shortestTravelTimePath(sourceIntersection, destinationIntersection);
+        if (destinationClusterId==currentClusterId){
 
-        route.poll(); // Ensure that route.get(0) != currentLocation.road.to.
+            internalSearchTime += (int) map.travelTimeBetween(sourceIntersection, destinationIntersection);
+        }
+
+        // Ensure that route.get(0) != currentLocation.road.to.
+        route.poll();
+
+        // because we don't know if this plan will lead it to a passenger or not - only assigned to can tell.
+        prevPickup = false;
+
+    }
+
+    private Integer chooseOutsideCluster(LocationOnRoad currentLocation, long currentTime){
+        /*
+            internalSearchTime = 0;
+            double [] probTable = epsTool.getProbabilityTable(qTable[currentClusterId]);
+            probTable[currentClusterId] = 0;
+            Integer choosenClusterId = epsTool.getRandomWithWeight(probTable);
+            return choosenClusterId;
+        */
+        double[] probTable = epsTool.getProbabilityTable(qTable[currentClusterId]);
+        Integer choosenClusterId = epsTool.getRandomWithWeight(probTable);
+        return choosenClusterId;
+    }
+
+    public void updateQTable(long currentTime){
+        double [] mDoubleVector = new double[totalClusterNumber];
+        for (int i = 0;i<totalClusterNumber;i++){
+            mDoubleVector[i] = mVector[i].toDouble(currentTime);
+        }
+        for (int i = 0;i<totalClusterNumber;i++){
+            for(int j = 0;j<totalClusterNumber;j++){
+                qTable[i][j] = qTable[i][j]*mDoubleVector[j];
+            }
+        }
+    }
+    public void updateMvector(Integer clusterId, long currentTime){
+        mVector[clusterId].setT_cap(currentTime);
+    }
+
+
+
+    private Integer initialPlanRoute(LocationOnRoad currentLocation, long currentTime){
+        updateR(currentTime);
+        currentTimeSlice = Cluster.mapTime(currentTime);
+        counter++;
+        double[] probTable = epsTool.getProbabilityTable(qTable[currentClusterId]);
+        Integer choosenClusterId = epsTool.getRandomWithWeight(probTable);
+        return choosenClusterId;
     }
 
 
     @Override
     public Intersection nextIntersection(LocationOnRoad currentLocation, long currentTime) {
+        Integer clusterId = ct.getClusterFromRoad(currentLocation.road).id;
+
+        //entered a new cluster.
+        if (clusterId!= currentClusterId){
+            currentClusterId = clusterId;
+        }
+
+
+
+
+        //standard update nextIntersection
         if (route.size() != 0) {
             // Route is not empty, take the next intersection.
             Intersection nextIntersection = route.poll();
@@ -131,11 +245,71 @@ public class AgentQTableDestination extends BaseAgent {
     @Override
     public void assignedTo(LocationOnRoad currentLocation, long currentTime, long resourceId, LocationOnRoad resourcePickupLocation, LocationOnRoad resourceDropoffLocation) {
         route.clear();
-        Long r = resourcePickupLocation.road.id;
-        Integer pickupClusterId = cluster.getClusterID(r);
-        qTable.get(currentClusterId).put(pickupClusterId ,
-                                         qTable.get(currentClusterId).get(pickupClusterId) + 0.01);
-
+        //reset internal search time.
+        internalSearchTime = 0;
+        prevPickup = true;
 
     }
+
+    private void printQtablePretty(){
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0;i<totalClusterNumber;i++){
+            sb.append("\t");
+            sb.append("c"+i);
+            sb.append("\t");
+        }
+        sb.append("\n");
+        for (int i = 0;i<totalClusterNumber;i++){
+            sb.append("c"+i);
+            sb.append("\t");
+            double[] innerTable = qTable[i];
+            for(int j = 0;j<totalClusterNumber;j++){
+                sb.append(innerTable[j]);
+                sb.append("\t");
+            }
+            sb.append("\n");
+        }
+        System.out.println(sb);
+    }
+
+    private void printClusterShortestTravelTime(){
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0;i<totalClusterNumber;i++){
+
+            sb.append("c"+i);
+            sb.append(",");
+        }
+        sb.append("\n");
+        for (int i = 0;i<totalClusterNumber;i++){
+            sb.append("c"+i);
+            sb.append(",");
+            for(int j = 0;j<totalClusterNumber;j++){
+                int randomTime = 30;
+                int totalTravelTime = 0;
+
+                Set<Intersection> os = clusters.get(i).intersections;
+                Set<Intersection> ds = clusters.get(j).intersections;
+
+                if(i!=j && os.size()!=0 && ds.size()!=0){
+                    for(int k = 0;k<randomTime;k++){
+
+                        Intersection o = epsTool.getRandomFromSet(os);
+                        Intersection d = epsTool.getRandomFromSet(ds);
+
+                        totalTravelTime += map.travelTimeBetween(o, d);
+                    }
+                }
+
+                shortestClusterTravelTime[i][j] = (double) totalTravelTime/randomTime;
+                sb.append(totalTravelTime/randomTime);
+                sb.append(",");
+            }
+            sb.append("\n");
+        }
+        System.out.println(sb);
+    }
+
+
 }

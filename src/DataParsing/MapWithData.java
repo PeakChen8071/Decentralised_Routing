@@ -73,11 +73,13 @@ public class MapWithData {
 		try {
 
 			//modified
-//			PrintWriter writer = new PrintWriter("pickup_dropof_road_id_201606.csv", "UTF-8");
-//			writer.println("pickup_roadId,dropoff_roadId");
+			//PrintWriter writer = new PrintWriter("pickup_dropof_road_id_201606_processed.csv", "UTF-8");
+			//writer.println("pickup_roadId,dropoff_roadId");
 			//
+			System.out.println(resourcesParsed.size());
             for (Resource resource : resourcesParsed) {
 				// map matching
+				//System.out.println("written");
 				LocationOnRoad pickupMatch = mapMatch(resource.getPickupLon(), resource.getPickupLat());
 				LocationOnRoad dropoffMatch = mapMatch(resource.getDropoffLon(), resource.getDropoffLat());
 				//modified

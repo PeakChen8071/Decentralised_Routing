@@ -12,7 +12,7 @@ public class EpsilonGreedyTools {
         this.eps = epsilon;
     }
     public <T> T getRandomFromSet(Set<T> set){
-        if(set==null) System.out.println("Null set exception");
+        if(set==null || set.size() == 0) System.out.println("Null set exception");
         int size = set.size();
         int itemIdx = new Random().nextInt(size);
         int i = 0;
@@ -60,6 +60,44 @@ public class EpsilonGreedyTools {
         if(largest.equals(destination)) choosenCounter++;
         return destination;
     }
+
+    public int getRandomWithWeight(double[] probTable){
+        allCounter++;
+        if(allCounter%100000==0){
+            System.out.println("% choosen using eps : "+ eps+" = "+(double)choosenCounter/allCounter);
+        }
+        int largest = 0;
+        double largestVal = -1.0;
+        List<Map.Entry<Integer,Double>> rangeAxis = new ArrayList<>();
+        //calculate cumulative average speed of roads
+        double totalWeight = 0;
+        for (int itx = 0; itx<probTable.length;itx++){
+            Map.Entry<Integer, Double> pair = new AbstractMap.SimpleEntry<>(itx, probTable[itx]);
+            rangeAxis.add(pair);
+            double val = pair.getValue();
+            totalWeight+= val;
+            if(largestVal<val){
+                largestVal = val;
+                largest = itx;
+            }
+        }
+
+        int randomIndex = -1;
+        double random = Math.random()*totalWeight;
+        for (int i = 0; i < rangeAxis.size(); ++i)
+        {
+            random -= rangeAxis.get(i).getValue();
+            if (random <= 0.0d)
+            {
+                randomIndex = i;
+                break;
+            }
+        }
+        int destination = rangeAxis.get(randomIndex).getKey();
+        if(largest == destination) choosenCounter++;
+        return destination;
+    }
+
     public <T> HashMap<T, Double> getProbabilityTable(HashMap<T, Double> rewardTable){
         double maxReward = -1;
         T maxChoice = null;
@@ -81,6 +119,30 @@ public class EpsilonGreedyTools {
                 probTable.put(itx, one_minus_eps_averaged);
             }
             probTable.put(maxChoice, 1-eps);
+        }
+        return probTable;
+    }
+    public double[] getProbabilityTable(double[] rewardTable){
+        double maxReward = -1;
+        int maxChoice = 0;
+        int numOfChoices = (rewardTable.length-1);
+        double one_minus_eps_averaged;
+
+        double[] probTable = new double[rewardTable.length];
+        if(numOfChoices==0){
+            probTable[0] = 1;
+        }else{
+            one_minus_eps_averaged = eps/numOfChoices;
+            for (int i = 0;i<rewardTable.length;i++){
+                double thisReward = rewardTable[i];
+
+                if(maxReward < thisReward){
+                    maxReward = thisReward;
+                    maxChoice = i;
+                }
+                probTable[i] = one_minus_eps_averaged;
+            }
+            probTable[maxChoice] = 1-eps;
         }
         return probTable;
     }

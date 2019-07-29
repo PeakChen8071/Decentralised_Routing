@@ -38,8 +38,8 @@ public class AgentRandomDestination extends BaseAgent {
 		super(id, map);
 		rnd = new Random(id);
 		if (dataModel == null) {
-			//System.out.println(map.intersections().size());
 			dataModel = new DummyDataModel(map);
+			Cluster.setZoneId(map.computeZoneId());
 		}
 	}
 
@@ -55,6 +55,7 @@ public class AgentRandomDestination extends BaseAgent {
 	@Override
 	public void planSearchRoute(LocationOnRoad currentLocation, long currentTime) {
 
+		//System.out.println((Cluster.mapTime(currentTime)));
 		String pattern = dataModel.foo(); // Pretend we are using some data model for routing.
 		
 		route.clear();
