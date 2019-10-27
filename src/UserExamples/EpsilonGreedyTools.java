@@ -25,10 +25,10 @@ public class EpsilonGreedyTools {
         return set.iterator().next();
     }
     public <T> T getRandomWithWeight(HashMap<T,Double> probTable){
-        allCounter++;
-        if(allCounter%100000==0){
-            System.out.println("% choosen using eps : "+ eps+" = "+(double)choosenCounter/allCounter);
-        }
+//        allCounter++;
+//        if(allCounter%100000==0){
+//            System.out.println("% choosen using eps : "+ eps+" = "+(double)choosenCounter/allCounter);
+//        }
         T largest = null;
         double largestVal = -1.0;
         List<Map.Entry<T,Double>> rangeAxis = new ArrayList<>();
@@ -98,7 +98,7 @@ public class EpsilonGreedyTools {
         return destination;
     }
 
-    public <T> HashMap<T, Double> getProbabilityTable(HashMap<T, Double> rewardTable){
+    public <T> HashMap<T, Double> getProbabilityTableWithEps(HashMap<T, Double> rewardTable){
         double maxReward = -1;
         T maxChoice = null;
         int numOfChoices = (rewardTable.size()-1);
@@ -122,7 +122,7 @@ public class EpsilonGreedyTools {
         }
         return probTable;
     }
-    public double[] getProbabilityTable(double[] rewardTable){
+    public double[] getProbabilityTableWithEps(double[] rewardTable){
         double maxReward = -1;
         int maxChoice = 0;
         int numOfChoices = (rewardTable.length-1);
@@ -146,4 +146,5 @@ public class EpsilonGreedyTools {
         }
         return probTable;
     }
+
 }

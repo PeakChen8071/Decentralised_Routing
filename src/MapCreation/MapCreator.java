@@ -4,20 +4,10 @@ import COMSETsystem.*;
 import DataParsing.GeoProjector;
 import DataParsing.KdTree;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.io.IOException;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
+import UserExamples.Cluster;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -655,6 +645,35 @@ public class MapCreator {
 		for (Intersection inter : intersections.values()) {
 			for (Road road : inter.getRoadsFrom()) {
 				roads.add(road);
+			}
+		}
+		//modification
+		HashMap<Long, Double> PR = new HashMap<>();
+		Scanner sc = null;
+		try {
+			sc = new Scanner(new File("ClusterData/pagerank.csv"));
+			sc.useDelimiter(",|\n");    //scanner will skip over "," and "\n" found in file
+			sc.nextLine(); // skip the header
+			while (sc.hasNext()) {
+				String str = sc.nextLine();
+				//road_id,page_rank
+				String[] s = str.split(",");
+				Long roadId = Long.parseLong(s[0]);
+				Double rank = Double.parseDouble(s[1]);
+				PR.put(roadId, rank);
+
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+
+		for (Road r:roads){
+			r.rating  = r.travelTime;
+
+			if (PR.containsKey(r.id)){
+				//System.out.println(PR.get(r.id)/r.length*5000000 + " "+r.rating);
+				r.rating = (long) Math.min(r.rating, r.length/PR.get(r.id));
 			}
 		}
 		return new CityMap(intersections, roads, projector, kdTree);

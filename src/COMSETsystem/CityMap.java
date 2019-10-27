@@ -47,6 +47,8 @@ public class CityMap {
 
 	// Shortest travel-time path table.
 	private ImmutableList<ImmutableList<PathTableEntry>> immutablePathTable;
+
+	private ImmutableList<ImmutableList<PathTableEntry>> bestCruiseTimeTable;
 	
 	// A map from an intersection's path table index to the intersection itself.
 	private HashMap<Integer, Intersection> intersectionsByPathTableIndex;
@@ -180,12 +182,14 @@ public class CityMap {
 			// 'reset' every queue entry
 			for (DijkstraQueueEntry entry : queueEntry.values()) {
 				entry.cost = Long.MAX_VALUE;
+				entry.rating = Long.MAX_VALUE;
 				entry.inQueue = true;
 			}
 
 			// source is set at distance 0
 			DijkstraQueueEntry sourceEntry = queueEntry.get(source);
 			sourceEntry.cost = 0;
+			sourceEntry.rating = 0;
 			pathTable.get(source.pathTableIndex).set(source.pathTableIndex, new PathTableEntry(0L, source.pathTableIndex));
 
 			PriorityQueue<DijkstraQueueEntry> queue = new PriorityQueue<>(queueEntry.values());
@@ -197,9 +201,12 @@ public class CityMap {
 				for (Road r : entry.intersection.getRoadsFrom()) {
 					DijkstraQueueEntry v = queueEntry.get(r.to);
 					if (!v.inQueue) continue;
+					long nrating = entry.rating + r.travelTime;
 					long ncost = entry.cost + r.travelTime;
-					if (v.cost > ncost) {
+
+					if (v.rating > nrating) {
 						queue.remove(v);
+						v.rating = nrating;
 						v.cost = ncost;
 						pathTable.get(source.pathTableIndex).set(v.intersection.pathTableIndex, new PathTableEntry(v.cost, entry.intersection.pathTableIndex));
 						queue.add(v);
@@ -212,6 +219,66 @@ public class CityMap {
 		makePathTableUnmodifiable(pathTable);
 	}
 
+
+	public void calcSearchTimes() {
+		ArrayList<ArrayList<PathTableEntry>> pathTable;
+
+		// initialize path table
+		pathTable = new ArrayList<ArrayList<PathTableEntry>>();
+		for (int i = 0; i < intersections.size(); i++) {
+			ArrayList<PathTableEntry> aList = new ArrayList<PathTableEntry>();
+			for (int j = 0; j < intersections.size(); j++) {
+				aList.add(null);
+			}
+			pathTable.add(aList);
+		}
+
+		// creates a queue entry for each intersection
+		HashMap<Intersection, DijkstraQueueEntry> queueEntry = new HashMap<>();
+		for (Intersection i : intersections.values()) {
+			queueEntry.put(i, new DijkstraQueueEntry(i));
+		}
+
+		for (Intersection source : intersections.values()) {
+			// 'reset' every queue entry
+			for (DijkstraQueueEntry entry : queueEntry.values()) {
+				entry.cost = Long.MAX_VALUE;
+				entry.rating = Long.MAX_VALUE;
+				entry.inQueue = true;
+			}
+
+			// source is set at distance 0
+			DijkstraQueueEntry sourceEntry = queueEntry.get(source);
+			sourceEntry.cost = 0;
+			sourceEntry.rating = 0;
+			pathTable.get(source.pathTableIndex).set(source.pathTableIndex, new PathTableEntry(0L, source.pathTableIndex));
+
+			PriorityQueue<DijkstraQueueEntry> queue = new PriorityQueue<>(queueEntry.values());
+
+			while (!queue.isEmpty()) {
+				DijkstraQueueEntry entry = queue.poll();
+				entry.inQueue = false;
+
+				for (Road r : entry.intersection.getRoadsFrom()) {
+					DijkstraQueueEntry v = queueEntry.get(r.to);
+					if (!v.inQueue) continue;
+					long nrating = entry.rating + r.rating;//r.travelTime;
+					long ncost = entry.cost + r.travelTime;
+
+					if (v.rating > nrating) {
+						queue.remove(v);
+						v.rating = nrating;
+						v.cost = ncost;
+						pathTable.get(source.pathTableIndex).set(v.intersection.pathTableIndex, new PathTableEntry(v.cost, entry.intersection.pathTableIndex));
+						queue.add(v);
+					}
+				}
+			}
+		}
+
+		// Make the path table unmodifiable
+		makeSearchPathUnmodifiable(pathTable);
+	}
 	/**
 	 * Make a path table unmodifiable.
 	 * @param pathTable
@@ -226,6 +293,18 @@ public class CityMap {
 		pathTable.clear();
 
 		immutablePathTable = ImmutableList.copyOf(aListOfImmutableList);
+	}
+
+	public void makeSearchPathUnmodifiable(ArrayList<ArrayList<PathTableEntry>> pathTable) {
+		ArrayList<ImmutableList<PathTableEntry>> aListOfImmutableList = new ArrayList<ImmutableList<PathTableEntry>>();
+		for (int i = 0; i < intersections.size(); i++) {
+			ArrayList<PathTableEntry> aListOfPathTableEntries = pathTable.get(i);
+			aListOfImmutableList.add(ImmutableList.copyOf(aListOfPathTableEntries));
+			aListOfPathTableEntries.clear();
+		}
+		pathTable.clear();
+
+		bestCruiseTimeTable = ImmutableList.copyOf(aListOfImmutableList);
 	}
 
 	/**
@@ -246,9 +325,22 @@ public class CityMap {
 		return path;
 	}
 
+	public LinkedList<Intersection> bestCrusiseTimePath(Intersection source, Intersection destination) {
+		LinkedList<Intersection> path = new LinkedList<Intersection>();
+		path.addFirst(destination);
+		int current = destination.pathTableIndex;
+		while (current != source.pathTableIndex) {
+			int pred = bestCruiseTimeTable.get(source.pathTableIndex).get(current).predecessor;
+			path.addFirst(intersectionsByPathTableIndex.get(pred));
+			current = pred;
+		}
+		return path;
+	}
+
 	private class DijkstraQueueEntry implements Comparable<DijkstraQueueEntry> {
 		Intersection intersection;
 		long cost = Long.MAX_VALUE;
+		long rating = Long.MAX_VALUE;
 		boolean inQueue = true;
 
 		DijkstraQueueEntry(Intersection intersection) {
@@ -257,9 +349,9 @@ public class CityMap {
 
 		@Override
 		public int compareTo(DijkstraQueueEntry j) {
-			if (this.cost < j.cost) {
+			if (this.rating < j.rating) {
 				return -1;
-			} else if (this.cost > j.cost) {
+			} else if (this.rating > j.rating) {
 				return 1;
 			} else if (this.intersection.id < j.intersection.id) {
 				return -1;
@@ -269,11 +361,26 @@ public class CityMap {
 				return 0;
 			}
 		}
+//		@Override
+//		public int compareTo(DijkstraQueueEntry j) {
+//			if (this.cost < j.cost) {
+//				return -1;
+//			} else if (this.cost > j.cost) {
+//				return 1;
+//			} else if (this.intersection.id < j.intersection.id) {
+//				return -1;
+//			} else if (this.intersection.id > j.intersection.id) {
+//				return 1;
+//			} else {
+//				return 0;
+//			}
+//		}
 	}
 
 	private class PathTableEntry {
 		final long travelTime;
 		final int predecessor;
+//		final long rating;
 
 		PathTableEntry(long travelTime, int predecessor) {
 			this.travelTime = travelTime;
@@ -367,6 +474,7 @@ public class CityMap {
 		cityMap.intersections = intersectionsCopy;
 		cityMap.roads = roadsCopy;
 		cityMap.immutablePathTable = immutablePathTable;
+		cityMap.bestCruiseTimeTable = bestCruiseTimeTable;
 		cityMap.projector = projector;
 		cityMap.kdTree = kdTree;
 		

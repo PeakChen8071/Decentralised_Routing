@@ -12,12 +12,14 @@ public class ClusterTool {
     public static HashMap<Intersection, Integer> intersectionClusterLookup;
     static CityMap map;
 
-    public static HashMap<Integer, Cluster> clusters;
+    static EpsilonGreedyTools epsTool;
+    public static Map<Integer, Cluster> clusters;
 
     private <T> T getRandomValueFromSet(Set<T> set) {
         int size = set.size();
         int itemIdx = new Random().nextInt(size);
         int i = 0;
+
         for (T t : set) {
             if (i == itemIdx) {
                 return t;
@@ -28,11 +30,12 @@ public class ClusterTool {
     }
 
 
-    public ClusterTool(CityMap Cmap, HashMap<Integer, Cluster> Clusters) {
+    public ClusterTool(CityMap Cmap, Map<Integer, Cluster> Clusters, EpsilonGreedyTools epstool) {
         map = Cmap;
         clusters = Clusters;
         roadClusterLookup = new HashMap<>();
         intersectionClusterLookup = new HashMap<>();
+        epsTool = epstool;
 
         for (Road r : map.roads()) {
             roadClusterLookup.put(r, 0);//initialize them as unknown.
@@ -68,5 +71,47 @@ public class ClusterTool {
     public Cluster getClusterFromIntersection(Intersection itx) {
         return clusters.get(intersectionClusterLookup.get(itx));
     }
+
+//    public double [][] getClusterShortestTravelTime(){
+//        int totalClusterNumber = clusters.size();
+//        double [][] shortestClusterTravelTime = new double [totalClusterNumber][totalClusterNumber];
+//        StringBuilder sb = new StringBuilder();
+//
+//        for (int i = 0;i<totalClusterNumber;i++){
+//
+//            sb.append("c"+i);
+//            sb.append(",");
+//        }
+//        sb.append("\n");
+//        for (int i = 0;i<totalClusterNumber;i++){
+//            sb.append("c"+i);
+//            sb.append(",");
+//            for(int j = 0;j<totalClusterNumber;j++){
+//                int randomTime = 50;
+//                int totalTravelTime = 0;
+//
+//                Set<Intersection> os = clusters.get(i).intersections;
+//                Set<Intersection> ds = clusters.get(j).intersections;
+//
+//                if(i!=j && os.size()!=0 && ds.size()!=0){
+//                    for(int k = 0;k<randomTime;k++){
+//
+//                        Intersection o = epsTool.getRandomFromSet(os);
+//                        Intersection d = epsTool.getRandomFromSet(ds);
+//
+//                        totalTravelTime += map.travelTimeBetween(o, d);
+//                    }
+//                }
+//
+//                shortestClusterTravelTime[i][j] = (double) totalTravelTime/randomTime;
+//                sb.append(totalTravelTime/randomTime);
+//                sb.append(",");
+//            }
+//            sb.append("\n");
+//        }
+//        System.out.println(sb);
+//        return shortestClusterTravelTime;
+//
+//    }
 }
 

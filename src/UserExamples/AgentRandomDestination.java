@@ -39,7 +39,7 @@ public class AgentRandomDestination extends BaseAgent {
 		rnd = new Random(id);
 		if (dataModel == null) {
 			dataModel = new DummyDataModel(map);
-			Cluster.setZoneId(map.computeZoneId());
+			//Cluster.setZoneId(map.computeZoneId());
 		}
 	}
 

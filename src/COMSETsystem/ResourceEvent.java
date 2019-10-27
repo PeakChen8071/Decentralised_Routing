@@ -1,5 +1,7 @@
 package COMSETsystem;
 
+import java.io.*;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,6 +48,9 @@ public class ResourceEvent extends Event {
 	 * @param dropoffLoc this resource's destination location.
 	 * @param simulator the simulator object.
 	 */
+
+	static boolean first = true;
+	static String expirationLogName = "";
 	public ResourceEvent(LocationOnRoad pickupLoc, LocationOnRoad dropoffLoc, long availableTime, Simulator simulator) {
 		super(availableTime, simulator);
 		this.pickupLoc = pickupLoc;
@@ -111,9 +116,10 @@ public class ResourceEvent extends Event {
 			long travelTimeToEndIntersection = agent.time - time;
 			long travelTimeFromStartIntersection = agent.loc.road.travelTime - travelTimeToEndIntersection;
 			LocationOnRoad agentLocationOnRoad = new LocationOnRoad(agent.loc.road, travelTimeFromStartIntersection);
+
 			long travelTime = simulator.map.travelTimeBetween(agentLocationOnRoad, pickupLoc);
 			long arriveTime = travelTime + time;
-			if (arriveTime < earliest) {
+			if (arriveTime < earliest && travelTime <= 40) {
 				bestAgent = agent;
 				earliest = arriveTime;
 				bestAgentLocationOnRoad = agentLocationOnRoad;
@@ -125,6 +131,61 @@ public class ResourceEvent extends Event {
 			this.time += simulator.ResourceMaximumLifeTime;
 			this.eventCause = EXPIRED;
 			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Setup expiration event at time " + this.time, this);
+
+
+			//log expriation events - my modification
+			try{
+				if (first){
+					String properties = "";
+					StringBuilder sb = new StringBuilder();
+					try {
+
+						Properties prop = new Properties();
+						prop.load(new FileInputStream("etc/config.properties"));
+
+						String fleetSize = prop.getProperty("comset.number_of_agents").trim();
+						sb.append(fleetSize);
+						String method = prop.getProperty("comset.agent_class").trim();
+						if (method.equals("UserExamples.AgentRandomDestination")){
+							method = "RandomDest";
+						}else{
+							method = "Independent";
+						}
+						sb.append("_");
+						sb.append(method);
+						String road_cluster_file = prop.getProperty("cluster.road_cluster_file").trim();
+						String substr = road_cluster_file.substring(12,road_cluster_file.length()-4);
+						sb.append("_");
+						sb.append(substr);
+					}catch (IOException ioe){
+						ioe.printStackTrace();
+					}
+					properties = properties + sb.toString();
+					expirationLogName = "Expiration_"+properties+"_original_Dijkstra.csv";
+					PrintWriter pw = new PrintWriter(expirationLogName);
+
+					pw.write(Long.toString(this.pickupLoc.road.id));
+					pw.write(",");
+					pw.close();
+					first = false;
+				}else{
+
+					FileWriter fw = new FileWriter(expirationLogName, true); //Set true for append mode
+					PrintWriter pw = new PrintWriter(fw);
+
+					pw.write(Long.toString(this.pickupLoc.road.id));
+					pw.write(",");
+					pw.close();
+				}
+
+			}catch (FileNotFoundException fnfe){
+				fnfe.printStackTrace();
+			}catch (IOException ioe){
+				ioe.printStackTrace();
+			}
+
+
+			//
 			return this;
 		} else { // make assignment
 			// update the statistics       	

@@ -17,6 +17,8 @@ public class Road implements Comparable<Road> {
 	public double length;
 	// travel time of the road segment in seconds
 	public long travelTime;
+
+	public long rating;
 	// a unique id
 	public long id;
 
@@ -33,6 +35,7 @@ public class Road implements Comparable<Road> {
 		this.id = maxId++;
 		this.length = 0;
 		this.travelTime = 0;
+		this.rating = 0;
 		links = new ArrayList<>();
 	}
 	
@@ -47,6 +50,7 @@ public class Road implements Comparable<Road> {
 		this.id = road.id;
 		this.length = road.length;
 		this.travelTime = road.travelTime;
+		this.rating = road.rating;
 		this.from = from;
 		this.to= to;
 		this.links = links;

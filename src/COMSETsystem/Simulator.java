@@ -2,6 +2,8 @@ package COMSETsystem;
 
 import MapCreation.*;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.*;
 import me.tongfei.progressbar.*;
@@ -149,6 +151,10 @@ public class Simulator {
 		System.out.println("Pre-computing all pair travel times...");
 		map.calcTravelTimes();
 
+		// Pre-compute best weighted search route
+		System.out.println("Pre-computing best search route...");
+		map.calcSearchTimes();
+
 		// Make a map copy for agents to use so that an agent cannot modify the map used by
 		// the simulator
 		mapForAgents = map.makeCopy();
@@ -168,6 +174,100 @@ public class Simulator {
 
 		// Initialize the event queue.
 		events = mapWD.getEvents();
+
+		try {
+			PrintWriter writer = new PrintWriter("roadConnectivityWithTravelTimeSpeed.txt", "UTF-8");
+			List<Road> rs = map.roads();
+			writer.println("roadId,from_node,to_node,from_node_lat,from_node_lon,to_node_lat,to_node_lon,length,travel_time");
+			for (Road r : rs) {
+				writer.print(r.id);
+				writer.print(",");
+				writer.print(r.from.id);
+				writer.print(",");
+				writer.print(r.to.id);
+				writer.print(",");
+				writer.print(r.from.latitude);
+				writer.print(",");
+				writer.print(r.from.longitude);
+				writer.print(",");
+				writer.print(r.to.latitude);
+				writer.print(",");
+				writer.print(r.to.longitude);
+				writer.print(",");
+				writer.print(r.length);
+				writer.print(",");
+				writer.print(r.travelTime);
+				writer.println();
+			}
+			writer.close();
+		}catch(IOException ioe){
+			ioe.printStackTrace();
+		}
+//			writer.close();
+//			writer.println("roadId,toto,fromfrom,tofrom,fromto");
+//			for(Road r:rs){
+//				Intersection to = r.to;
+//				Intersection from = r.from;
+//
+//				Set<Road> ToTo = to.getRoadsTo();
+//				Set<Road> FromFrom = from.getRoadsFrom();
+//				Set<Road> ToFrom = to.getRoadsFrom();
+//				Set<Road> FromTo = from.getRoadsTo();
+//
+//				writer.print(r.id+",");
+//				for (Road n:ToTo) {
+//					writer.print(n.id + " ");
+//				}
+//				writer.print(",");
+//				for (Road n:FromFrom) {
+//					writer.print(n.id + " ");
+//				}
+//				writer.print(",");
+//				for (Road n:ToFrom) {
+//					writer.print(n.id + " ");
+//				}
+//				writer.print(",");
+//				for (Road n:FromTo) {
+//					writer.print(n.id + " ");
+//				}
+//				writer.println();
+//			}
+//			writer.close();
+//			PrintWriter writer2 = new PrintWriter("intersection_list.txt", "UTF-8");
+//			Map<Long, Intersection> ints = map.intersections();
+//			writer2.println("origin,from,to,lon,lat");
+//			for(Long l:ints.keySet()){
+//
+//				writer2.print(l+",");
+//				Intersection L = ints.get(l);
+//
+//				for (Intersection af :L.getAdjacentFrom()) {
+//					writer2.print(af.id + "-");
+//					writer2.print(L.roadTo(af).id);
+//					writer2.print(" ");
+//
+//				}
+//				writer2.print(",");
+//				for (Intersection at :L.getAdjacentTo()) {
+//					writer2.print(at.id + "-");
+//					writer2.print(at.roadTo(L).id);
+//					writer2.print(" ");
+//				}
+//				writer2.print(",");
+//				writer2.print(L.longitude);
+//				writer2.print(",");
+//				writer2.print(L.latitude);
+//				writer2.print(",");
+//				writer2.print(L.latitude);
+//				writer2.println();
+//			}
+//			writer2.close();
+//		}catch(IOException ioe){
+//			ioe.printStackTrace();
+//		}
+//
+
+
 	}
 
 	/**

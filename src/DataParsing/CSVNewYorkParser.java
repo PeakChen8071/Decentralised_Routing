@@ -85,7 +85,7 @@ public class CSVNewYorkParser {
 			/*
 			modification: to get trial data parse lines
 			 */
-			//PrintWriter writer = new PrintWriter("inpolygon_row_number_201606.txt", "UTF-8");
+			//PrintWriter writer = new PrintWriter("inpolygon_row_number_201605.txt", "UTF-8");
 
 			/*
 			end of modification
@@ -100,17 +100,15 @@ public class CSVNewYorkParser {
 			// and save the 4 tokens of each line in the corresponding field of the TimestampAgRe object
 			while (sc.hasNext()) {
 
+				//tpep_pickup_datetime,tpep_dropoff_datetime,passenger_count,trip_distance,pickup_longitude,pickup_latitude,dropoff_longitude,dropoff_latitude,pickup_roadId,dropoff_roadId
 
 
-				sc.next();// skip first VendorID
 				long time = dateConversion(sc.next());
 				sc.next();// skip these fields
 				sc.next();
 				sc.next();
 				double pickupLon = Double.parseDouble(sc.next());
 				double pickupLat = Double.parseDouble(sc.next());
-				sc.next();// skip these fields
-				sc.next();
 				double dropoffLon = Double.parseDouble(sc.next());
 				double dropoffLat = Double.parseDouble(sc.next());
 				sc.nextLine(); //skip rest of fileds in this line
@@ -121,7 +119,7 @@ public class CSVNewYorkParser {
 					continue;
 				}
 				//modification
-//				else{//trial-data-parse modification
+//\\				else{//trial-data-parse modification
 //					writer.write('1');
 //				}
 

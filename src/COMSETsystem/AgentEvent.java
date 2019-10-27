@@ -148,7 +148,7 @@ public class AgentEvent extends Event {
 					travelTime = simulator.map.travelTimeBetween(loc, res.pickupLoc);
 				}
 
-				if (travelTime != Long.MAX_VALUE) {
+				if (travelTime != Long.MAX_VALUE && travelTime <= 20) {
 					// if the resource is reachable before expiration
 					long arriveTime = time + travelTime;
 					if (arriveTime + simulator.ResourceMaximumLifeTime <= res.expirationTime && arriveTime < earliest) {

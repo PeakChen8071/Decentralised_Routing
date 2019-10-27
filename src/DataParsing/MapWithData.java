@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Random;
 
@@ -73,18 +74,17 @@ public class MapWithData {
 		try {
 
 			//modified
-			//PrintWriter writer = new PrintWriter("pickup_dropof_road_id_201606_processed.csv", "UTF-8");
-			//writer.println("pickup_roadId,dropoff_roadId");
+			HashMap<Long,Integer> pickupCount = new HashMap<>();
+			PrintWriter writer = new PrintWriter("pickup_road_id_lon_lat_6_03_csv", "UTF-8");
+			writer.println("pickup_roadId,pickup_count");
 			//
-			System.out.println(resourcesParsed.size());
+			System.out.println("resource size: "+resourcesParsed.size());
             for (Resource resource : resourcesParsed) {
-				// map matching
-				//System.out.println("written");
+
 				LocationOnRoad pickupMatch = mapMatch(resource.getPickupLon(), resource.getPickupLat());
 				LocationOnRoad dropoffMatch = mapMatch(resource.getDropoffLon(), resource.getDropoffLat());
-				//modified
-				//writer.println(pickupMatch.road.id+","+dropoffMatch.road.id);
-				//
+
+				pickupCount.put(pickupMatch.road.id, pickupCount.getOrDefault(pickupMatch.road.id, 0)+1);
 				ResourceEvent ev = new ResourceEvent(pickupMatch, dropoffMatch, resource.getTime(), simulator);
 				events.add(ev);
 
@@ -98,7 +98,10 @@ public class MapWithData {
 				}
 			}
             //modified
-            //writer.close();
+			for (Long roadId:pickupCount.keySet()){
+				writer.println(roadId+","+pickupCount.get(roadId));
+			}
+            writer.close();
             //
 		} catch (Exception e) {
 			e.printStackTrace();
