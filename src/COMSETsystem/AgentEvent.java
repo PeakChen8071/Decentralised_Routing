@@ -1,5 +1,6 @@
 package COMSETsystem;
 
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
@@ -57,6 +58,7 @@ public class AgentEvent extends Event {
 	 * @param time when this agent starts search.
 	 * @param loc this agent's location when it becomes empty.
 	 */
+
 	public AgentEvent(LocationOnRoad loc, long startedSearch, Simulator simulator) {
 		super(startedSearch, simulator);
 		this.loc = loc;
@@ -65,6 +67,7 @@ public class AgentEvent extends Event {
 		simulator.emptyAgents.add(this); 
 		try {
 			Constructor<? extends BaseAgent> cons = simulator.agentClass.getConstructor(Long.TYPE, CityMap.class);
+			simulator.mapForAgents.simulator = simulator;
 			agent = cons.newInstance(id, simulator.mapForAgents);
 		} catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
 			e.printStackTrace();
@@ -121,13 +124,14 @@ public class AgentEvent extends Event {
 		
 		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Move to " + nextRoad.to, this);
 		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next trigger time = " + time, this);
+
 		return this;
 	}
 
 	/*
 	 * The handler of a DROPPING_OFF event.
 	 */
-	Event dropoffHandler() {
+	Event dropoffHandler() throws IOException {
 		startSearchTime = time;
 		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Dropoff at " + loc, this);
 		// Only check the following when an agent drops off a resource. 
@@ -148,7 +152,7 @@ public class AgentEvent extends Event {
 					travelTime = simulator.map.travelTimeBetween(loc, res.pickupLoc);
 				}
 
-				if (travelTime != Long.MAX_VALUE && travelTime <= 20) {
+				if (travelTime <= 40) {
 					// if the resource is reachable before expiration
 					long arriveTime = time + travelTime;
 					if (arriveTime + simulator.ResourceMaximumLifeTime <= res.expirationTime && arriveTime < earliest) {
@@ -225,5 +229,9 @@ public class AgentEvent extends Event {
 		this.time = time;
 		this.loc = loc;
 		this.eventCause = eventCause;
+	}
+
+	public boolean canpickup(){
+		return agent.canpickup;
 	}
 }

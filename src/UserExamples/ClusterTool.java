@@ -12,7 +12,7 @@ public class ClusterTool {
     public static HashMap<Intersection, Integer> intersectionClusterLookup;
     static CityMap map;
 
-    static EpsilonGreedyTools epsTool;
+    static ChoiceModel epsTool;
     public static Map<Integer, Cluster> clusters;
 
     private <T> T getRandomValueFromSet(Set<T> set) {
@@ -30,7 +30,7 @@ public class ClusterTool {
     }
 
 
-    public ClusterTool(CityMap Cmap, Map<Integer, Cluster> Clusters, EpsilonGreedyTools epstool) {
+    public ClusterTool(CityMap Cmap, Map<Integer, Cluster> Clusters, ChoiceModel epstool) {
         map = Cmap;
         clusters = Clusters;
         roadClusterLookup = new HashMap<>();
@@ -54,18 +54,18 @@ public class ClusterTool {
         }
     }
 
-    //get all clusters's id.
-    public ArrayList<Integer> getTimes() {
-        ArrayList<Integer> times = new ArrayList<>();
-        for (Integer t : clusters.values().iterator().next().pickupTimeMap.keySet()) {
-            times.add(t);
-        }
-        return times;
-    }
-
+//    //get all clusters's id.
+//    public ArrayList<Integer> getTimes() {
+//        ArrayList<Integer> times = new ArrayList<>();
+//        for (Integer t : clusters.values().iterator().next().pickupTimeMap.keySet()) {
+//            times.add(t);
+//        }
+//        return times;
+//    }
 
     public Cluster getClusterFromRoad(Road r) {
-        return clusters.get(roadClusterLookup.get(r));
+        int cluster_index = roadClusterLookup.get(r);
+        return clusters.get(cluster_index);
     }
 
     public Cluster getClusterFromIntersection(Intersection itx) {

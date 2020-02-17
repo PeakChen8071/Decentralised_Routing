@@ -2,6 +2,8 @@ package COMSETsystem;
 
 import MapCreation.*;
 
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.NumberFormat;
@@ -42,7 +44,7 @@ public class Simulator {
 	protected TreeSet<AgentEvent> emptyAgents = new TreeSet<>(new AgentEventComparator());
 
 	// The set of resources that with no agent assigned to it yet.
-	protected TreeSet<ResourceEvent> waitingResources = new TreeSet<>(new ResourceEventComparator());
+	public TreeSet<ResourceEvent> waitingResources = new TreeSet<>(new ResourceEventComparator());
 
 	// The maximum life time of a resource in seconds. This is a parameter of the simulator.
 	public long ResourceMaximumLifeTime;
@@ -90,6 +92,10 @@ public class Simulator {
 
 	// The number of assignments that have been made.
 	protected long totalAssignments = 0;
+
+	// The output file names to record the time and location of resource introduction/expiration
+	public String resourceLogName = "";
+	public String expirationLogName = "";
 
 	// A list of all the agents in the system. Not really used in COMSET, but maintained for
 	// a user's debugging purposes.
@@ -170,39 +176,43 @@ public class Simulator {
 
 		// Deploy agents at random locations of the map.
 		System.out.println("Randomly placing " + this.totalAgents + " agents on the map...");
+
+
+		// Manipulate the starting position of agents
 		agents = mapWD.placeAgentsRandomly(this);
+		//agents = mapWD.placeAgentFromHighest(this);
 
 		// Initialize the event queue.
 		events = mapWD.getEvents();
 
-		try {
-			PrintWriter writer = new PrintWriter("roadConnectivityWithTravelTimeSpeed.txt", "UTF-8");
-			List<Road> rs = map.roads();
-			writer.println("roadId,from_node,to_node,from_node_lat,from_node_lon,to_node_lat,to_node_lon,length,travel_time");
-			for (Road r : rs) {
-				writer.print(r.id);
-				writer.print(",");
-				writer.print(r.from.id);
-				writer.print(",");
-				writer.print(r.to.id);
-				writer.print(",");
-				writer.print(r.from.latitude);
-				writer.print(",");
-				writer.print(r.from.longitude);
-				writer.print(",");
-				writer.print(r.to.latitude);
-				writer.print(",");
-				writer.print(r.to.longitude);
-				writer.print(",");
-				writer.print(r.length);
-				writer.print(",");
-				writer.print(r.travelTime);
-				writer.println();
-			}
-			writer.close();
-		}catch(IOException ioe){
-			ioe.printStackTrace();
-		}
+//		try {
+//			PrintWriter writer = new PrintWriter("roadConnectivityWithTravelTimeSpeed.txt", "UTF-8");
+//			List<Road> rs = map.roads();
+//			writer.println("roadId,from_node,to_node,from_node_lat,from_node_lon,to_node_lat,to_node_lon,length,travel_time");
+//			for (Road r : rs) {
+//				writer.print(r.id);
+//				writer.print(",");
+//				writer.print(r.from.id);
+//				writer.print(",");
+//				writer.print(r.to.id);
+//				writer.print(",");
+//				writer.print(r.from.latitude);
+//				writer.print(",");
+//				writer.print(r.from.longitude);
+//				writer.print(",");
+//				writer.print(r.to.latitude);
+//				writer.print(",");
+//				writer.print(r.to.longitude);
+//				writer.print(",");
+//				writer.print(r.length);
+//				writer.print(",");
+//				writer.print(r.travelTime);
+//				writer.println();
+//			}
+//			writer.close();
+//		}catch(IOException ioe){
+//			ioe.printStackTrace();
+//		}
 //			writer.close();
 //			writer.println("roadId,toto,fromfrom,tofrom,fromto");
 //			for(Road r:rs){
@@ -284,11 +294,68 @@ public class Simulator {
 		if (map == null) {
 			System.out.println("map is null at beginning of run");
 		}
+
+		String properties = "";
+		StringBuilder sb = new StringBuilder();
+		try {
+			Properties prop = new Properties();
+			prop.load(new FileInputStream("etc/config.properties"));
+			String fleetSize = prop.getProperty("comset.number_of_agents").trim();
+			sb.append(fleetSize);
+			String test_file = prop.getProperty("comset.dataset_file").trim().replaceAll(
+					"Raw_Yellow_Taxi_Data/", "_").replaceAll(".csv", "");
+			sb.append(test_file);
+			String method = prop.getProperty("comset.agent_class").trim();
+			if (method.equals("UserExamples.AgentRandomDestination")){
+				method = "RandomDest";
+			}else{
+				method = "Independent";
+			}
+			sb.append("_");
+			sb.append(method);
+			String road_cluster_file = prop.getProperty("cluster.road_cluster_file").trim();
+			String substr = road_cluster_file.substring(12,road_cluster_file.length()-4);
+			sb.append("_");
+			sb.append(substr);
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+		properties = properties + sb.toString();
+		String agentLogName = "Resource and Expiration Results/02_01_Agents_" + properties + ".csv";
+		FileWriter fw = new FileWriter(agentLogName);
+		PrintWriter pw = new PrintWriter(fw);
+		pw.write("time,empty_agents,waiting_resources\n");
+		pw.close();
+
+		resourceLogName = "Resource and Expiration Results/02_01_Resources_" + properties + ".csv";
+		FileWriter fw1 = new FileWriter(resourceLogName);
+		PrintWriter pw1 = new PrintWriter(fw1);
+		pw1.write("time,Road ID\n");
+		pw1.close();
+
+		expirationLogName = "Resource and Expiration Results/02_01_Expiration_"+properties+".csv";
+		FileWriter fw2 = new FileWriter(expirationLogName);
+		PrintWriter pw2 = new PrintWriter(fw2);
+		pw2.write("time,expiration\n");
+		pw2.close();
+
 		try (ProgressBar pb = new ProgressBar("Progress:", 100, ProgressBarStyle.ASCII)) {
 			long beginTime = events.peek().time;
+			long recordTime = events.peek().time;
+
 			while (events.peek().time <= simulationEndTime) {
 				Event toTrigger = events.poll();
 				pb.stepTo((long)(((float)(toTrigger.time - beginTime)) / (simulationEndTime - beginTime) * 100.0));
+
+			//	create output file to record the number of available agent when an agent event is triggered
+				if (recordTime < events.peek().time) {
+					fw = new FileWriter(agentLogName, true);
+					pw = new PrintWriter(fw);
+					pw.write(events.peek().time + "," + emptyAgents.size() + "," + waitingResources.size() + "\n");
+					pw.close();
+					recordTime = events.peek().time;
+				}
+
 				Event e = toTrigger.trigger();
 				if (e != null) {
 					events.add(e);

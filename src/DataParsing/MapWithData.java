@@ -15,15 +15,15 @@ import org.apache.log4j.jmx.Agent;
 
 /**
  * The MapWithData class is responsible for loading a resource dataset file,
- * map matching resources, and create a list of resource events.  
+ * map matching resources, and create a list of resource events.
  */
 public class MapWithData {
 
 	// Map without any data added to it
-	public CityMap map;     
+	public CityMap map;
 
 	// Full path of the file containing the resources to be loaded to the simulator
-	private String resourceFile;    
+	private String resourceFile;
 
 	// Priority queue of events
 	public PriorityQueue<Event> events;
@@ -34,11 +34,11 @@ public class MapWithData {
 
 	// The latest possible time that a resource is dropped off. The time is used to determine the time at which
 	// the simulation is to stop.
-	public long latestResourceTime = -1; 
-	
+	public long latestResourceTime = -1;
+
 	// Seed for the random number generator when placing agents.
 	public long agentPlacementRandomSeed;
-	
+
 	// Time Zone ID of the map; for conversion from the time stamps in a resource dataset file to Linux epochs.
 	protected ZoneId zoneId;
 
@@ -58,7 +58,7 @@ public class MapWithData {
 
 	/**
 	 * Maps each agent and each resource onto the nearest location on the map
-	 * according to the agent/resource's longitude and latitude. Creates resource events 
+	 * according to the agent/resource's longitude and latitude. Creates resource events
 	 * for each passenger record obtained from the resource file and adds them to the events
 	 * priority queue.
 	 *
@@ -67,7 +67,7 @@ public class MapWithData {
 	 * @return long the latest resource time
 	 */
 	public long createMapWithData(Simulator simulator) {
- 
+
 		CSVNewYorkParser parser = new CSVNewYorkParser(resourceFile, zoneId);
 		ArrayList<Resource> resourcesParsed = parser.parse();
 
@@ -75,11 +75,11 @@ public class MapWithData {
 
 			//modified
 			HashMap<Long,Integer> pickupCount = new HashMap<>();
-			PrintWriter writer = new PrintWriter("pickup_road_id_lon_lat_6_03_csv", "UTF-8");
-			writer.println("pickup_roadId,pickup_count");
+			// PrintWriter writer = new PrintWriter("pickup_road_id_lon_lat_6_03_csv", "UTF-8");
+			//writer.println("pickup_roadId,pickup_count");
 			//
 			System.out.println("resource size: "+resourcesParsed.size());
-            for (Resource resource : resourcesParsed) {
+			for (Resource resource : resourcesParsed) {
 
 				LocationOnRoad pickupMatch = mapMatch(resource.getPickupLon(), resource.getPickupLat());
 				LocationOnRoad dropoffMatch = mapMatch(resource.getDropoffLon(), resource.getDropoffLat());
@@ -97,16 +97,16 @@ public class MapWithData {
 					latestResourceTime = resource.getTime() + simulator.ResourceMaximumLifeTime + ev.tripTime;
 				}
 			}
-            //modified
-			for (Long roadId:pickupCount.keySet()){
-				writer.println(roadId+","+pickupCount.get(roadId));
-			}
-            writer.close();
-            //
+			//modified
+//			for (Long roadId:pickupCount.keySet()){
+//				writer.println(roadId+","+pickupCount.get(roadId));
+//			}
+//            writer.close();
+			//
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	
+
 		return latestResourceTime;
 	}
 
@@ -123,7 +123,7 @@ public class MapWithData {
 		double distanceFromStartVertex = this.distance(snapResult[0], snapResult[1], link.from.getX(), link.from.getY());
 		long travelTimeFromStartVertex = Math.round(distanceFromStartVertex / link.length * link.travelTime);
 		long travelTimeFromStartIntersection = link.beginTime + travelTimeFromStartVertex;
-		return new LocationOnRoad(link.road, travelTimeFromStartIntersection);		
+		return new LocationOnRoad(link.road, travelTimeFromStartIntersection);
 	}
 
 	/**
@@ -187,17 +187,17 @@ public class MapWithData {
 	 */
 	public ArrayList<BaseAgent> placeAgentsRandomly(Simulator simulator) {
 		ArrayList<BaseAgent> agents = new ArrayList<BaseAgent>();
-		long deployTime = earliestResourceTime - 1; 
+		long deployTime = earliestResourceTime - 1;
 
 		Random generator = new Random(agentPlacementRandomSeed);
 		for (int i = 0; i < simulator.totalAgents(); i++) {
 			Road road = map.roads().get(generator.nextInt(map.roads().size()));
-            long travelTimeFromStartIntersection;
-            if (road.travelTime != 0) {
-                travelTimeFromStartIntersection = (long) (generator.nextInt((int) road.travelTime));
-            } else {
-                travelTimeFromStartIntersection = 0L;
-            }
+			long travelTimeFromStartIntersection;
+			if (road.travelTime != 0) {
+				travelTimeFromStartIntersection = (long) (generator.nextInt((int) road.travelTime));
+			} else {
+				travelTimeFromStartIntersection = 0L;
+			}
 			LocationOnRoad locationOnRoad = new LocationOnRoad(road, travelTimeFromStartIntersection);
 			AgentEvent ev = new AgentEvent(locationOnRoad, deployTime, simulator);
 			events.add(ev);
@@ -206,8 +206,27 @@ public class MapWithData {
 		return agents;
 	}
 
+	public ArrayList<BaseAgent> placeAgentFromHighest(Simulator simulator){
+		ArrayList<BaseAgent> agents = new ArrayList<BaseAgent>();
+		long deployTime = earliestResourceTime - 1;
+		Random generator = new Random(agentPlacementRandomSeed);
+		for (int i = 0; i < simulator.totalAgents(); i++) {
+			Road road = map.roads().get(9220);
+			long travelTimeFromStartIntersection;
+			if (road.travelTime != 0) {
+				travelTimeFromStartIntersection = (long) (generator.nextInt((int) road.travelTime));
+			} else {
+				travelTimeFromStartIntersection = 0L;
+			}
+			LocationOnRoad locationOnRoad = new LocationOnRoad(road, travelTimeFromStartIntersection);
+			AgentEvent ev = new AgentEvent(locationOnRoad, deployTime, simulator);
+			events.add(ev);
+			agents.add(ev.agent);
+		}
+		return agents;
+	}
 	/**
-	 * 
+	 *
 	 * @return events
 	 */
 	public PriorityQueue<Event> getEvents() {

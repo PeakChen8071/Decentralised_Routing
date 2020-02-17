@@ -641,15 +641,17 @@ public class MapCreator {
 				kdTree.insert(link);	
 			}			
 		}
+
 		List<Road> roads = new ArrayList<>();
-		for (Intersection inter : intersections.values()) {
-			for (Road road : inter.getRoadsFrom()) {
+		for (Intersection inter: intersections.values()) {
+			for (Road road: inter.getRoadsFrom()) {
 				roads.add(road);
 			}
 		}
-		//modification
+
+//		modification
 		HashMap<Long, Double> PR = new HashMap<>();
-		Scanner sc = null;
+		Scanner sc;
 		try {
 			sc = new Scanner(new File("ClusterData/pagerank.csv"));
 			sc.useDelimiter(",|\n");    //scanner will skip over "," and "\n" found in file
@@ -672,8 +674,8 @@ public class MapCreator {
 			r.rating  = r.travelTime;
 
 			if (PR.containsKey(r.id)){
-				//System.out.println(PR.get(r.id)/r.length*5000000 + " "+r.rating);
-				r.rating = (long) Math.min(r.rating, r.length/PR.get(r.id));
+//				System.out.println(PR.get(r.id)/r.length*5000000 + " "+r.rating);
+				r.rating = (long) (r.travelTime / PR.get(r.id));
 			}
 		}
 		return new CityMap(intersections, roads, projector, kdTree);

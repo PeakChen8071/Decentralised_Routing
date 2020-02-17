@@ -5,11 +5,8 @@ import COMSETsystem.Intersection;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import COMSETsystem.Link;
 import COMSETsystem.Road;
 import UserExamples.Cluster;
 
@@ -19,7 +16,6 @@ public class RoadClusterParser{
     public Map<Integer, Cluster> knownClusters;
     public HashMap<Long, Road> roadIdLookup;
     public HashMap<Road, Cluster> roadClusterLookup;
-    public HashMap<Integer, Float> attractiveNess;
     public HashMap<Intersection, Cluster> intersectionClusterLookup;
     private HashSet<Integer> clusterIdsThatHasAtLeastOneIntersection;
     public RoadClusterParser(CityMap cmap) {
@@ -35,32 +31,29 @@ public class RoadClusterParser{
     }
     public Map<Integer, Cluster> parseRoadClusterFile(){
         try {
-
             Properties prop = new Properties();
             prop.load(new FileInputStream("etc/config.properties"));
 
             String clusterAttrFile = prop.getProperty("cluster.attr").trim();
             Scanner sc = new Scanner(new File(clusterAttrFile));
-            sc.useDelimiter(",|\n");    //scanner will skip over "," and "\n" found in file
+            sc.useDelimiter("[,\n]");    //scanner will skip over "," and "\n" found in file
             sc.nextLine(); // skip the header
             while (sc.hasNext()) {
                 String str = sc.nextLine();
 
                 String[] s = str.split(",");
-                Integer cluster_id = Integer.parseInt(s[0]);
-                Double totalAttr = Double.parseDouble(s[1]);
-                Double length = Double.parseDouble(s[2]) /1000;
-                Integer totalNumber = Integer.parseInt(s[3]);
-                Double normalizedAttr = Double.parseDouble(s[4]); //stores exp(x)
-                Double linearlizedAttr = Math.exp(Double.parseDouble(s[5])); //stores exp(x)
-                knownClusters.put(cluster_id, new Cluster(cluster_id, linearlizedAttr, length));
+                int cluster_id = Integer.parseInt(s[0]);
+                double total_cluster_PR = Double.parseDouble(s[1]);
+                double total_cluster_tt = Double.parseDouble(s[2]);
+                int total_road_count = Integer.parseInt(s[3]);
+                double cluster_attractiveness = Double.parseDouble(s[4]);
+                double normalised_attractiveness = Double.parseDouble(s[5]);
+                knownClusters.put(cluster_id, new Cluster(cluster_id, normalised_attractiveness, total_cluster_tt, 5 / cluster_attractiveness));
             }
-
-            prop.load(new FileInputStream("etc/config.properties"));
 
             String clusterNbFile = prop.getProperty("cluster.cluster_nb_file").trim();
             sc = new Scanner(new File(clusterNbFile));
-            sc.useDelimiter(",|\n");    //scanner will skip over "," and "\n" found in file
+            sc.useDelimiter("[,\n]");    //scanner will skip over "," and "\n" found in file
             sc.nextLine(); // skip the header
             while (sc.hasNext()) {
                 String str = sc.nextLine();
@@ -68,47 +61,47 @@ public class RoadClusterParser{
                 String[] s = str.split(",");
                 Integer cluster_id = Integer.parseInt(s[0]);
                 String[] nbs = s[1].split(" ");
+//                System.out.println(nbs);
+//                System.out.println(cluster_id);
                 for (String nb:nbs){
                     knownClusters.get(cluster_id).nbs.add(Integer.parseInt(nb));
                 }
             }
 
-
             String roadClusterFile = prop.getProperty("cluster.road_cluster_file").trim();
             sc = new Scanner(new File(roadClusterFile));
-            sc.useDelimiter(",|\n");    //scanner will skip over "," and "\n" found in file
+            sc.useDelimiter("[,\n]");    //scanner will skip over "," and "\n" found in file
             sc.nextLine(); // skip the header
             while (sc.hasNext()) {
                 String str = sc.nextLine();
 
                 String[] s = str.split(",");
-                Long roadId = Long.parseLong(s[0]);
-                Integer clusterId = Integer.parseInt(s[1]);
+                int roadId = Integer.parseInt(s[0]);
+                int clusterId = Integer.parseInt(s[1]);
                 addRoadEntry(roadId, clusterId);
             }
+
             sc.close();
             computeIntersectionClusterInfo();
-
         } catch (Exception e) {
-
             e.printStackTrace();
         }
         int totalItx = 0;
         int totalRoad = 0;
-        for(Cluster c:knownClusters.values()){
-            totalItx+=c.intersections.size();
-            totalRoad+=c.roads.size();
-            System.out.println("c"+c.id+" has # intersections: "+c.intersections.size()+" # roads: "+c.roads.size());
+        for (Cluster c : knownClusters.values()) {
+            totalItx += c.intersections.size();
+            totalRoad += c.roads.size();
+            System.out.println("c" + c.id + " has " + c.intersections.size() + " intersections, "
+                    + c.roads.size() + " roads, and attractiveness: " + c.getClusterAttractiveness());
         }
 //        System.out.println("total intersection sizes " + totalItx);
 //        System.out.println("total intersection sizes confirm " + intersectionClusterLookup.keySet().size());
 //        System.out.println("total road sizes " + totalRoad);
 //        System.out.println("total road sizes confirm " + roadClusterLookup.keySet().size());
-        for (Cluster c:knownClusters.values()){
-            System.out.println("c"+c.id+"attr: "+Math.log(c.getAttractiveNess())+" search time:"+c.getSearchTime());
-        }
+
         return knownClusters;
     }
+
     public HashMap<Cluster, HashMap<Integer, Integer>> parseRoadPickupFile() {
 
         HashMap<Cluster, HashMap<Integer, Integer>> outerMap = new HashMap<>();
@@ -172,33 +165,31 @@ public class RoadClusterParser{
             e.printStackTrace();
         }
         //attach information to c pickup - source of reward.
-        for(Cluster c:knownClusters.values()){
-            c.pickupTimeMap = outerMap.get(c);
-        }
+//        for(Cluster c:knownClusters.values()){
+//            c.pickupTimeMap = outerMap.get(c);
+//        }
         return outerMap;
     }
 
 
-
     public void addRoadEntry(long roadId, int clusterID){
         Cluster c;
-        if(knownClusters.containsKey(clusterID)){
+        if (knownClusters.containsKey(clusterID)) {
             c = knownClusters.get(clusterID);
-
-        }else{
-            c = new Cluster(clusterID, 0, 0);
+        } else {
+            c = new Cluster(clusterID, 0, 0, 1000);
             knownClusters.put(clusterID, c);
         }
         Road r = roadIdLookup.get(roadId);
-        if (r==null) return;
+        if (r == null) return;
         c.addRoad(r);
 
         c.distance += r.length;
-        c.totalSpeedTimesDistance += r.length/r.travelTime;
+        c.totalClusterSpeed += r.length / r.travelTime;
         roadClusterLookup.put(roadIdLookup.get(roadId), c);
     }
 
-    public void computeIntersectionClusterInfo(){
+    public void computeIntersectionClusterInfo() {
         for(Intersection itx: map.intersections().values()){
             calculateIntersectionCluster(itx);
         }

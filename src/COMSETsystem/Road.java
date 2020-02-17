@@ -17,14 +17,12 @@ public class Road implements Comparable<Road> {
 	public double length;
 	// travel time of the road segment in seconds
 	public long travelTime;
-
+	// cost for calculating the shortest path
 	public long rating;
 	// a unique id
 	public long id;
-
 	// an ID counter to get a unique id
 	private static long maxId = 0;
-	
 	// links that constitute the road
 	public ArrayList<Link> links;
 
@@ -52,7 +50,7 @@ public class Road implements Comparable<Road> {
 		this.travelTime = road.travelTime;
 		this.rating = road.rating;
 		this.from = from;
-		this.to= to;
+		this.to = to;
 		this.links = links;
 	}
 	
@@ -92,6 +90,7 @@ public class Road implements Comparable<Road> {
 	public boolean equals(Road road) { //ASK: this isnt really used anywhere??
 		return (road.from.equals(this.from) && road.to.equals(this.to));
 	}
+
 
 	/**
 	 * returns information about the road as a string

@@ -56,6 +56,7 @@ public class CityMap {
 	/*
 	 * Constructor of CityMap
 	 */
+	public Simulator simulator;
 	public CityMap(Map<Long, Intersection> intersections, List<Road> roads, 
 			GeoProjector projector, KdTree kdTree) {
 		this.intersections = intersections;
@@ -262,7 +263,7 @@ public class CityMap {
 				for (Road r : entry.intersection.getRoadsFrom()) {
 					DijkstraQueueEntry v = queueEntry.get(r.to);
 					if (!v.inQueue) continue;
-					long nrating = entry.rating + r.rating;//r.travelTime;
+					long nrating = entry.rating + r.rating; //r.travelTime;
 					long ncost = entry.cost + r.travelTime;
 
 					if (v.rating > nrating) {

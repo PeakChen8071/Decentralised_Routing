@@ -13,6 +13,8 @@ public abstract class BaseAgent {
 	// An id that is unique across all agents and resources 
 	protected final long id;
 
+	public boolean canpickup;
+
 	/**
 	 * BaseAgent constructor. 
 	 *
@@ -22,6 +24,7 @@ public abstract class BaseAgent {
 	public BaseAgent (long id, CityMap map) {
 		this.id = id;
 		this.map = map;
+		this.canpickup = true;
 	}
 
 	/**

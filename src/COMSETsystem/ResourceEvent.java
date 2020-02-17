@@ -49,8 +49,9 @@ public class ResourceEvent extends Event {
 	 * @param simulator the simulator object.
 	 */
 
-	static boolean first = true;
-	static String expirationLogName = "";
+	static boolean firstExpire = true;
+	static boolean firstResource = true;
+
 	public ResourceEvent(LocationOnRoad pickupLoc, LocationOnRoad dropoffLoc, long availableTime, Simulator simulator) {
 		super(availableTime, simulator);
 		this.pickupLoc = pickupLoc;
@@ -77,6 +78,7 @@ public class ResourceEvent extends Event {
 
 		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "******** ResourceEvent id = "+Long.toString(id) + " triggered at time " + time, this);
 		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Loc = " + this.pickupLoc + "," + this.dropoffLoc, this);
+
 		if (simulator.map == null) {
 			System.out.println("map is null in resource");
 		}
@@ -90,21 +92,27 @@ public class ResourceEvent extends Event {
 			expireHandler();
 			return null;
 		}
-
 	}
 
 	/*
 	 * Handler of a BECOME_AVAILABLE event
 	 */
-	public Event becomeAvailableHandler() {
+	public Event becomeAvailableHandler() throws IOException {
 		//total number of resources from dataset appearing through the simulation increases
 		++simulator.totalResources;
+
+		String resourceLogName = simulator.resourceLogName;
+		FileWriter fw1 = new FileWriter(resourceLogName, true);
+		PrintWriter pw1 = new PrintWriter(fw1);
+		pw1.write(availableTime + "," + pickupLoc.road.id + "\n");
+		pw1.close();
 
 		// finds the agent with least travel time between itself and this resource
 		AgentEvent bestAgent = null;
 		long earliest = Long.MAX_VALUE;
 		LocationOnRoad bestAgentLocationOnRoad = null;
 		for (AgentEvent agent : simulator.emptyAgents) {
+
 
 			// Calculate the travel time from the agent's current location to resource.
 			// Assumption: agent.time is the arrival time at the end intersection of agent.loc.road. 
@@ -132,63 +140,17 @@ public class ResourceEvent extends Event {
 			this.eventCause = EXPIRED;
 			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Setup expiration event at time " + this.time, this);
 
+//			keep a record of the expired resources
+			String expirationLogName = simulator.expirationLogName;
+			FileWriter fw2 = new FileWriter(expirationLogName, true);
+			PrintWriter pw2 = new PrintWriter(fw2);
+			pw2.write(expirationTime + "," + pickupLoc.road.id + "\n");
+			pw2.close();
 
-			//log expriation events - my modification
-			try{
-				if (first){
-					String properties = "";
-					StringBuilder sb = new StringBuilder();
-					try {
-
-						Properties prop = new Properties();
-						prop.load(new FileInputStream("etc/config.properties"));
-
-						String fleetSize = prop.getProperty("comset.number_of_agents").trim();
-						sb.append(fleetSize);
-						String method = prop.getProperty("comset.agent_class").trim();
-						if (method.equals("UserExamples.AgentRandomDestination")){
-							method = "RandomDest";
-						}else{
-							method = "Independent";
-						}
-						sb.append("_");
-						sb.append(method);
-						String road_cluster_file = prop.getProperty("cluster.road_cluster_file").trim();
-						String substr = road_cluster_file.substring(12,road_cluster_file.length()-4);
-						sb.append("_");
-						sb.append(substr);
-					}catch (IOException ioe){
-						ioe.printStackTrace();
-					}
-					properties = properties + sb.toString();
-					expirationLogName = "Expiration_"+properties+"_original_Dijkstra.csv";
-					PrintWriter pw = new PrintWriter(expirationLogName);
-
-					pw.write(Long.toString(this.pickupLoc.road.id));
-					pw.write(",");
-					pw.close();
-					first = false;
-				}else{
-
-					FileWriter fw = new FileWriter(expirationLogName, true); //Set true for append mode
-					PrintWriter pw = new PrintWriter(fw);
-
-					pw.write(Long.toString(this.pickupLoc.road.id));
-					pw.write(",");
-					pw.close();
-				}
-
-			}catch (FileNotFoundException fnfe){
-				fnfe.printStackTrace();
-			}catch (IOException ioe){
-				ioe.printStackTrace();
-			}
-
-
-			//
 			return this;
-		} else { // make assignment
-			// update the statistics       	
+
+		} else {
+//			make assignment and update statistics
 			long cruiseTime = time - bestAgent.startSearchTime;
 			long approachTime = earliest - time;
 			long searchTime = cruiseTime + approachTime;
@@ -200,7 +162,6 @@ public class ResourceEvent extends Event {
 			simulator.totalResourceWaitTime += waitTime;
 			simulator.totalResourceTripTime += tripTime;
 			simulator.totalAssignments++;
-
 
 			// Inform the assignment to the agent.
 			bestAgent.assignedTo(bestAgentLocationOnRoad, time, id, pickupLoc, dropoffLoc);

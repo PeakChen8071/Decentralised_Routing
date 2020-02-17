@@ -1,12 +1,8 @@
 package UserExamples;
 
-import COMSETsystem.CityMap;
 import COMSETsystem.Intersection;
 import COMSETsystem.Road;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.*;
 
 
@@ -17,33 +13,45 @@ public class Cluster {
     private double reward;
     public HashSet<Intersection> intersections;
     public HashSet<Road> roads;
-    public HashMap<Integer, Integer> pickupTimeMap; //created from parser
+
     public double distance;
-    public double totalSpeedTimesDistance;
+    public double totalClusterSpeed;
     public HashSet<Integer> nbs;
 
+    public HashMap<Integer, Integer> timePickup;
+    public HashMap<Integer, Integer> timeResource;
+    public HashMap<Integer, Integer> timeEmptyAgent;
 
-    public static double searchTimeBase;
+    public double searchTimeBase;
+    public static int timeslice;
 
-    public Cluster(int ID, double attr, double distance){
+    public Cluster(int ID, double attr,  double distance, double searchTimeBase){
         id = ID;
         this.attr = attr;
         this.distance = distance;
-        totalSpeedTimesDistance = 0;
+        totalClusterSpeed = 0;
         total_travel_time = 0;
-        searchTimeBase = 300.0; //in seconds
+        this.searchTimeBase = searchTimeBase;
         intersections = new HashSet<>();
         roads = new HashSet<>();
         nbs = new HashSet<>();
-
+        timePickup = new HashMap<>();
+        timeResource = new HashMap<>();
+        timeEmptyAgent = new HashMap<>();
+        int start = 7 * 60;
+        int finish = 10 * 60;
+        timeslice = 5;
+        for (int i = start; i <= finish; i += timeslice) {
+            timePickup.put(i, 0);
+            timeResource.put(i, 0);
+            timeEmptyAgent.put(i, 0);
+        }
     }
 
-
-
-    public double getSearchTime(){
-        return 10*total_travel_time/roads.size()*(1/Math.log(this.attr));
-    }
-    public double getAttractiveNess(){
+//    public double getSearchTime(){
+//        return 1000000000;//this.searchTimeBase;//5*(1/Math.log(this.attr));
+//    }
+    public double getClusterAttractiveness(){
         return attr;
     }
 //    public double getCurrentReward(Long time, double travelTime){
@@ -53,16 +61,17 @@ public class Cluster {
 //        return reward/distance;
 //    }
 
-    public void addIntersction(Intersection i){
+    public void addIntersction(Intersection i) {
         intersections.add(i);
     }
+
     public void addRoad(Road r){
         roads.add(r);
-        total_travel_time+=r.travelTime;
+        total_travel_time += r.travelTime;
     }
 
 
-//    public static void setZoneId(ZoneId z){
+    //    public static void setZoneId(ZoneId z){
 //        zid = z;
 //    }
 //    public static int mapTime(long time){
@@ -85,22 +94,4 @@ public class Cluster {
 //
 //        return timeKey;
 //    }
-    private static int mapMinute(int minute){
-        if (minute > 60 || minute < 0){
-            System.out.println("Error in minute conversion");
-            return 0;
-        }
-        int res;
-        if (minute < 15){
-            res = 0;
-        }else if(minute < 30){
-            res = 15;
-        }else if(minute < 45){
-            res = 30;
-        }else{
-            res = 45;
-        }
-        return res;
-    }
-
 }

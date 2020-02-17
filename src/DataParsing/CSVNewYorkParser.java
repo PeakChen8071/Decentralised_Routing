@@ -102,7 +102,6 @@ public class CSVNewYorkParser {
 
 				//tpep_pickup_datetime,tpep_dropoff_datetime,passenger_count,trip_distance,pickup_longitude,pickup_latitude,dropoff_longitude,dropoff_latitude,pickup_roadId,dropoff_roadId
 
-
 				long time = dateConversion(sc.next());
 				sc.next();// skip these fields
 				sc.next();
@@ -132,6 +131,9 @@ public class CSVNewYorkParser {
 
 			e.printStackTrace();
 		}
+
+
+
 		return resources;
 	}
 
