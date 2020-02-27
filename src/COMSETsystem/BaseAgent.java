@@ -15,6 +15,8 @@ public abstract class BaseAgent {
 
 	public boolean canpickup;
 
+	public boolean canAssignTo;
+
 	/**
 	 * BaseAgent constructor. 
 	 *
@@ -25,6 +27,7 @@ public abstract class BaseAgent {
 		this.id = id;
 		this.map = map;
 		this.canpickup = true;
+		this.canAssignTo = false;
 	}
 
 	/**

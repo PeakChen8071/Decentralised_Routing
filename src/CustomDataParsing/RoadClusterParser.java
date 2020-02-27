@@ -88,12 +88,12 @@ public class RoadClusterParser{
         }
         int totalItx = 0;
         int totalRoad = 0;
-        for (Cluster c : knownClusters.values()) {
-            totalItx += c.intersections.size();
-            totalRoad += c.roads.size();
-            System.out.println("c" + c.id + " has " + c.intersections.size() + " intersections, "
-                    + c.roads.size() + " roads, and attractiveness: " + c.getClusterAttractiveness());
-        }
+//        for (Cluster c : knownClusters.values()) {
+//            totalItx += c.intersections.size();
+//            totalRoad += c.roads.size();
+//            System.out.println("c" + c.id + " has " + c.intersections.size() + " intersections, "
+//                    + c.roads.size() + " roads, and attractiveness: " + c.getClusterAttractiveness());
+//        }
 //        System.out.println("total intersection sizes " + totalItx);
 //        System.out.println("total intersection sizes confirm " + intersectionClusterLookup.keySet().size());
 //        System.out.println("total road sizes " + totalRoad);

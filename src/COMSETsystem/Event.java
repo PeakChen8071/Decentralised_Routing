@@ -63,7 +63,7 @@ public abstract class Event implements Comparable<Event> {
 		else if (this.id > o.id)
 			return 1;
 		else {
-			System.out.println("Duplicate event exception");
+			System.out.println("Duplicate event exception "+this.id+" "+this.time);
 			System.exit(1);
 			return 0;
 		}

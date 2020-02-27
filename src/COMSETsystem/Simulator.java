@@ -31,17 +31,17 @@ import DataParsing.*;
 public class Simulator {
 
 	// The map that everything will happen on.
-	protected CityMap map;
+	public CityMap map;
 
 	// A deep copy of map to be passed to agents.
 	// This is a way to make map unmodifiable.
-	protected CityMap mapForAgents;
+	public CityMap mapForAgents;
 
 	// The event queue.
-	protected PriorityQueue<Event> events = new PriorityQueue<>();
+	public PriorityQueue<Event> events = new PriorityQueue<>();
 
 	// The set of empty agents.
-	protected TreeSet<AgentEvent> emptyAgents = new TreeSet<>(new AgentEventComparator());
+	public TreeSet<AgentEvent> emptyAgents = new TreeSet<>(new AgentEventComparator());
 
 	// The set of resources that with no agent assigned to it yet.
 	public TreeSet<ResourceEvent> waitingResources = new TreeSet<>(new ResourceEventComparator());
@@ -50,48 +50,48 @@ public class Simulator {
 	public long ResourceMaximumLifeTime;
 
 	// Full path to an OSM JSON map file
-	protected String mapJSONFile;
+	public String mapJSONFile;
 
 
 	// Full path to a TLC New York Yellow trip record file
-	protected String resourceFile = null;
+	public String resourceFile = null;
 
 	// Full path to a KML defining the bounding polygon to crop the map
-	protected String boundingPolygonKMLFile;
+	public String boundingPolygonKMLFile;
 
 	// The simulation end time is the expiration time of the last resource.
-	protected long simulationEndTime;
+	public long simulationEndTime;
 
 	// Total trip time of all resources to which agents have been assigned.
-	protected long totalResourceTripTime = 0;
+	public long totalResourceTripTime = 0;
 
 	// Total wait time of all resources. The wait time of a resource is the amount of time
 	// since the resource is introduced to the system until it is picked up by an agent.
-	protected long totalResourceWaitTime = 0;
+	public long totalResourceWaitTime = 0;
 
 	// Total search time of all agents. The search time of an agent for a research is the amount of time
 	// since the agent is labeled as empty, i.e., added to emptyAgents, until it picks up a resource.
-	protected long totalAgentSearchTime = 0;
+	public long totalAgentSearchTime = 0;
 
 	// Total cruise time of all agents. The cruise time of an agent for a research is the amount of time
 	// since the agent is labeled as empty until it is assigned to a resource.
-	protected long totalAgentCruiseTime = 0;
+	public long totalAgentCruiseTime = 0;
 
 	// Total approach time of all agents. The approach time of an agent for a research is the amount of time
 	// since the agent is assigned to a resource until agent reaches the resource.
-	protected long totalAgentApproachTime = 0;
+	public long totalAgentApproachTime = 0;
 
 	// The number of expired resources.
-	protected long expiredResources = 0;
+	public long expiredResources = 0;
 
 	// The number of resources that have been introduced to the system.
-	protected long totalResources = 0;
+	public long totalResources = 0;
 
 	// The number of agents that are deployed (at the beginning of the simulation).
-	protected long totalAgents;
+	public long totalAgents;
 
 	// The number of assignments that have been made.
-	protected long totalAssignments = 0;
+	public long totalAssignments = 0;
 
 	// The output file names to record the time and location of resource introduction/expiration
 	public String resourceLogName = "";
@@ -102,7 +102,7 @@ public class Simulator {
 	ArrayList<BaseAgent> agents;
 
 	// A class that extends BaseAgent and implements a search routing strategy
-	protected final Class<? extends BaseAgent> agentClass;
+	public final Class<? extends BaseAgent> agentClass;
 
 	/**
 	 * Constructor of the class Main. This is made such that the type of
@@ -341,6 +341,7 @@ public class Simulator {
 
 		try (ProgressBar pb = new ProgressBar("Progress:", 100, ProgressBarStyle.ASCII)) {
 			long beginTime = events.peek().time;
+			events.add(new TimeEvent(beginTime, this));
 			long recordTime = events.peek().time;
 
 			while (events.peek().time <= simulationEndTime) {
