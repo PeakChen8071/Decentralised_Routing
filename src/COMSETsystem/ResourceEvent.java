@@ -103,10 +103,10 @@ public class ResourceEvent extends Event {
 		++simulator.totalResources;
 
 		String resourceLogName = simulator.resourceLogName;
-		FileWriter fw1 = new FileWriter(resourceLogName, true);
-		PrintWriter pw1 = new PrintWriter(fw1);
-		pw1.write(availableTime + "," + pickupLoc.road.id + "\n");
-		pw1.close();
+//		FileWriter fw1 = new FileWriter(resourceLogName, true);
+//		PrintWriter pw1 = new PrintWriter(fw1);
+//		pw1.write(availableTime + "," + pickupLoc.road.id + "\n");
+//		pw1.close();
 
 		simulator.waitingResources.add(this);
 		this.time += simulator.ResourceMaximumLifeTime;
@@ -115,10 +115,10 @@ public class ResourceEvent extends Event {
 
 //			keep a record of the expired resources
 		String expirationLogName = simulator.expirationLogName;
-		FileWriter fw2 = new FileWriter(expirationLogName, true);
-		PrintWriter pw2 = new PrintWriter(fw2);
-		pw2.write(expirationTime + "," + pickupLoc.road.id + "\n");
-		pw2.close();
+//		FileWriter fw2 = new FileWriter(expirationLogName, true);
+//		PrintWriter pw2 = new PrintWriter(fw2);
+//		pw2.write(expirationTime + "," + pickupLoc.road.id + "\n");
+//		pw2.close();
 
 		return this;
 

@@ -17,7 +17,11 @@ import java.util.logging.Logger;
 public class TimeEvent extends Event {
     public TimeEvent(long time, Simulator simulator){
         super(time, simulator);
+
         TreeSet<ResourceEvent> resourceEvents = simulator.waitingResources;
+        for (ResourceEvent r: resourceEvents){
+            r.time-=600;
+        }
         TreeSet<AgentEvent> agents = simulator.emptyAgents;
         Graph<Event, DefaultWeightedEdge> g = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
         Set<Event> agentPartition = new HashSet<>();
@@ -38,6 +42,7 @@ public class TimeEvent extends Event {
                     agentPartition.add(a);
                     resourcePartition.add(r);
                 }
+
             }
         }
         System.out.println("Number of agent"+agents.size());
@@ -53,12 +58,14 @@ public class TimeEvent extends Event {
             AssignAgentToResource(agent, resource);
             simulator.events.remove(resource);
         }
-
+        for (ResourceEvent r: resourceEvents){
+            r.time+=600;
+        }
     }
 
     private long getApproachTime(AgentEvent a, ResourceEvent r){
         long travelTimeToEndIntersection = a.time - r.time;
-        System.out.println("A time r time: "+ a.time + " "+r.time);
+//        System.out.println("A time r time: "+ a.time + " "+r.time);
         long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;
         LocationOnRoad agentLocationOnRoad = new LocationOnRoad(a.loc.road, travelTimeFromStartIntersection);
         long travelTime = simulator.map.travelTimeBetween(agentLocationOnRoad, r.pickupLoc);
@@ -73,6 +80,7 @@ public class TimeEvent extends Event {
     }
 
     private void AssignAgentToResource(AgentEvent a, ResourceEvent r){
+
         long travelTimeToEndIntersection = a.time - r.time;
         long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;
         LocationOnRoad agentLocationOnRoad = new LocationOnRoad(a.loc.road, travelTimeFromStartIntersection);
@@ -110,6 +118,7 @@ public class TimeEvent extends Event {
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "search time = " + searchTime + " seconds.", this);
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "wait time = " + waitTime + " seconds.", this);
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next agent trigger time = " + a.time, this);
+
     }
 
 }
