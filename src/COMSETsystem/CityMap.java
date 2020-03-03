@@ -122,8 +122,8 @@ public class CityMap {
 	 */
 	public long travelTimeBetween (LocationOnRoad source, LocationOnRoad destination) {
 		long travelTime = -1;
-		if (source.road == destination.road && source.travelTimeFromStartIntersection <= destination.travelTimeFromStartIntersection) { 
-			// If the two locations are on the same road and source is closer to the start intersection than destination, 
+		if (source.road == destination.road && source.travelTimeFromStartIntersection <= destination.travelTimeFromStartIntersection) {
+			// If the two locations are on the same road and source is closer to the start intersection than destination,
 			// then the travel time is the difference of travelTimeFromStartIntersection between source and destination.
 			travelTime = destination.travelTimeFromStartIntersection - source.travelTimeFromStartIntersection;
 		} else {
@@ -133,7 +133,8 @@ public class CityMap {
 			travelTime = travelTimeToEndIntersectionOfSource + travelTimeFromEndIntersectionOfSourceToStartIntersectionOfDestination + travelTimeFromStartIntersectionOfDestination;
 		}
 		return travelTime;
-	}        
+	}
+
 
 	/**
 	 * @return { @code projector }

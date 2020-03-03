@@ -8,6 +8,7 @@ import org.jgrapht.alg.interfaces.MatchingAlgorithm;
 import org.jgrapht.alg.matching.MaximumWeightBipartiteMatching;
 import org.jgrapht.graph.*;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -19,11 +20,11 @@ public class TimeEvent extends Event {
         TreeSet<ResourceEvent> resourceEvents = simulator.waitingResources;
         TreeSet<AgentEvent> agents = simulator.emptyAgents;
         Graph<Event, DefaultWeightedEdge> g = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
-        Set<Event> agentPartition = new TreeSet<>();
-        Set<Event> resourcePartition = new TreeSet<>();
+        Set<Event> agentPartition = new HashSet<>();
+        Set<Event> resourcePartition = new HashSet<>();
         for (AgentEvent a: agents){
             for (ResourceEvent r: resourceEvents){
-                long eta = getTripTime(a, r);
+                long eta = getApproachTime(a, r);
                 if (eta + r.time < r.expirationTime){
                     DefaultWeightedEdge e = new DefaultWeightedEdge();
                     if (!g.containsVertex(a)){
@@ -33,7 +34,7 @@ public class TimeEvent extends Event {
                         g.addVertex(r);
                     }
                     g.addEdge(a, r, e);
-                    g.setEdgeWeight(e, -1*eta);
+                    g.setEdgeWeight(e, 10000 - eta);
                     agentPartition.add(a);
                     resourcePartition.add(r);
                 }
@@ -41,26 +42,27 @@ public class TimeEvent extends Event {
         }
         System.out.println("Number of agent"+agents.size());
         System.out.println("Number of resources"+resourceEvents.size());
-        System.out.println("Number of resources"+simulator.totalResources);
         MaximumWeightBipartiteMatching matchObject = new MaximumWeightBipartiteMatching(g, agentPartition, resourcePartition);
 
         MatchingAlgorithm.Matching<Event, DefaultWeightedEdge> matching =  matchObject.getMatching();
         System.out.println("Number of matches "+matching.getEdges().size());
 
-//        for (DefaultWeightedEdge e: matching){
-//            AgentEvent agent = (AgentEvent) g.getEdgeSource(e);
-//            ResourceEvent resource = (ResourceEvent) g.getEdgeTarget(e);
-//            AssignAgentToResource(agent, resource);
-//            simulator.events.remove(resource);
-//        }
+        for (DefaultWeightedEdge e: matching){
+            AgentEvent agent = (AgentEvent) g.getEdgeSource(e);
+            ResourceEvent resource = (ResourceEvent) g.getEdgeTarget(e);
+            AssignAgentToResource(agent, resource);
+            simulator.events.remove(resource);
+        }
 
     }
 
-    private long getTripTime(AgentEvent a, ResourceEvent r){
+    private long getApproachTime(AgentEvent a, ResourceEvent r){
         long travelTimeToEndIntersection = a.time - r.time;
+        System.out.println("A time r time: "+ a.time + " "+r.time);
         long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;
         LocationOnRoad agentLocationOnRoad = new LocationOnRoad(a.loc.road, travelTimeFromStartIntersection);
         long travelTime = simulator.map.travelTimeBetween(agentLocationOnRoad, r.pickupLoc);
+
         return travelTime;
     }
 
@@ -76,9 +78,7 @@ public class TimeEvent extends Event {
         LocationOnRoad agentLocationOnRoad = new LocationOnRoad(a.loc.road, travelTimeFromStartIntersection);
 
         long cruiseTime = r.time - a.startSearchTime;
-        long approachTime = getTripTime(a, r);
-        // earliest = eta -
-        // earliest - time = eta
+        long approachTime = getApproachTime(a, r);
 
         long searchTime = cruiseTime + approachTime;
         long waitTime = approachTime - r.availableTime;
@@ -97,9 +97,11 @@ public class TimeEvent extends Event {
         // "Label" the agent as occupied.
         simulator.emptyAgents.remove(a);
         simulator.events.remove(a);
+        simulator.waitingResources.remove(r);
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Assigned to agent id = " + a.id + " currently at " + a.loc, this);
 
-        a.setEvent(getTripTime(a, r) + r.time + r.tripTime, r.dropoffLoc, AgentEvent.DROPPING_OFF);
+        a.setEvent(getApproachTime(a, r) + r.time + r.tripTime, r.dropoffLoc, AgentEvent.DROPPING_OFF);
+        simulator.events.add(a);
 
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "From agent to resource = " + approachTime + " seconds.", this);
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "From pickupLoc to dropoffLoc = " + r.tripTime + " seconds.", this);
