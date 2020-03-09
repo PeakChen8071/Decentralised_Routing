@@ -88,7 +88,7 @@ public class ResourceEvent extends Event {
 		}
 		if (eventCause == BECOME_AVAILABLE) {
 			Event e = becomeAvailableHandler();
-			return e;
+			return null;
 		} else {
 			expireHandler();
 			return null;
@@ -101,25 +101,8 @@ public class ResourceEvent extends Event {
 	public Event becomeAvailableHandler() throws IOException {
 		//total number of resources from dataset appearing through the simulation increases
 		++simulator.totalResources;
-
-		String resourceLogName = simulator.resourceLogName;
-//		FileWriter fw1 = new FileWriter(resourceLogName, true);
-//		PrintWriter pw1 = new PrintWriter(fw1);
-//		pw1.write(availableTime + "," + pickupLoc.road.id + "\n");
-//		pw1.close();
-
 		simulator.waitingResources.add(this);
-		this.time += simulator.ResourceMaximumLifeTime;
-		this.eventCause = EXPIRED;
 		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Setup expiration event at time " + this.time, this);
-
-//			keep a record of the expired resources
-		String expirationLogName = simulator.expirationLogName;
-//		FileWriter fw2 = new FileWriter(expirationLogName, true);
-//		PrintWriter pw2 = new PrintWriter(fw2);
-//		pw2.write(expirationTime + "," + pickupLoc.road.id + "\n");
-//		pw2.close();
-
 		return this;
 
 	}

@@ -19,17 +19,23 @@ public class TimeEvent extends Event {
         super(time, simulator);
 
         TreeSet<ResourceEvent> resourceEvents = simulator.waitingResources;
-        for (ResourceEvent r: resourceEvents){
-            r.time-=600;
-        }
         TreeSet<AgentEvent> agents = simulator.emptyAgents;
         Graph<Event, DefaultWeightedEdge> g = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
         Set<Event> agentPartition = new HashSet<>();
         Set<Event> resourcePartition = new HashSet<>();
+        HashSet<ResourceEvent> expiredEvents = new HashSet<>();
         for (AgentEvent a: agents){
             for (ResourceEvent r: resourceEvents){
+                if (time > r.expirationTime){
+                    if (!expiredEvents.contains(r)){
+                        expiredEvents.add(r);
+                        simulator.expiredResources ++;
+                        simulator.totalResourceWaitTime += simulator.ResourceMaximumLifeTime;
+                    }
+                    continue;
+                }
                 long eta = getApproachTime(a, r);
-                if (eta + r.time < r.expirationTime){
+                if (eta < simulator.ResourceMaximumLifeTime){
                     DefaultWeightedEdge e = new DefaultWeightedEdge();
                     if (!g.containsVertex(a)){
                         g.addVertex(a);
@@ -38,13 +44,15 @@ public class TimeEvent extends Event {
                         g.addVertex(r);
                     }
                     g.addEdge(a, r, e);
-                    g.setEdgeWeight(e, 10000 - eta);
+                    g.setEdgeWeight(e, simulator.ResourceMaximumLifeTime - eta); // max match with positive weighting
                     agentPartition.add(a);
                     resourcePartition.add(r);
                 }
 
             }
         }
+
+        simulator.waitingResources.removeAll(expiredEvents);
         System.out.println("Number of agent"+agents.size());
         System.out.println("Number of resources"+resourceEvents.size());
         MaximumWeightBipartiteMatching matchObject = new MaximumWeightBipartiteMatching(g, agentPartition, resourcePartition);
@@ -58,9 +66,7 @@ public class TimeEvent extends Event {
             AssignAgentToResource(agent, resource);
             simulator.events.remove(resource);
         }
-        for (ResourceEvent r: resourceEvents){
-            r.time+=600;
-        }
+
     }
 
     private long getApproachTime(AgentEvent a, ResourceEvent r){
@@ -85,11 +91,11 @@ public class TimeEvent extends Event {
         long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;
         LocationOnRoad agentLocationOnRoad = new LocationOnRoad(a.loc.road, travelTimeFromStartIntersection);
 
-        long cruiseTime = r.time - a.startSearchTime;
+        long cruiseTime = time - a.startSearchTime;
         long approachTime = getApproachTime(a, r);
 
         long searchTime = cruiseTime + approachTime;
-        long waitTime = approachTime - r.availableTime;
+        long waitTime = time + approachTime - r.availableTime;
 
         simulator.totalAgentCruiseTime += cruiseTime;
         simulator.totalAgentApproachTime += approachTime;
