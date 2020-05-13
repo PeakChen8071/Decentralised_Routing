@@ -96,6 +96,7 @@ public class Simulator {
 	// The output file names to record the time and location of resource introduction/expiration
 	public String resourceLogName = "";
 	public String expirationLogName = "";
+	public String meetingLogName = "";
 
 	// A list of all the agents in the system. Not really used in COMSET, but maintained for
 	// a user's debugging purposes.
@@ -130,8 +131,8 @@ public class Simulator {
 	 * @param totalAgents The total number of agents to deploy
 	 * @param boundingPolygonKMLFile The KML file defining a bounding polygon of the simulated area
 	 * @param maximumLifeTime The maximum life time of a resource
-	 * @param agentPlacementSeed The see for the random number of generator when placing the agents
-	 * @param speedRudction The speed reduction to accommodate traffic jams and turn delays
+	 * @param agentPlacementRandomSeed The see for the random number of generator when placing the agents
+	 * @param speedReduction The speed reduction to accommodate traffic jams and turn delays
 	 */
 	public void configure(String mapJSONFile, String resourceFile, Long totalAgents, String boundingPolygonKMLFile, Long maximumLifeTime, long agentPlacementRandomSeed, double speedReduction) {
 
@@ -321,23 +322,29 @@ public class Simulator {
 			ioe.printStackTrace();
 		}
 		properties = properties + sb.toString();
-		String agentLogName = "Resource and Expiration Results/02_01_Agents_" + properties + ".csv";
+		String agentLogName = "Resource and Expiration Results/05_01_Agents_" + properties + ".csv";
 		FileWriter fw = new FileWriter(agentLogName);
 		PrintWriter pw = new PrintWriter(fw);
 		pw.write("time,empty_agents,waiting_resources\n");
 		pw.close();
 
-		resourceLogName = "Resource and Expiration Results/02_01_Resources_" + properties + ".csv";
+		resourceLogName = "Resource and Expiration Results/05_01_Resources_" + properties + ".csv";
 		FileWriter fw1 = new FileWriter(resourceLogName);
 		PrintWriter pw1 = new PrintWriter(fw1);
-		pw1.write("time,Road ID\n");
+		pw1.write("time,new_resource\n");
 		pw1.close();
 
-		expirationLogName = "Resource and Expiration Results/02_01_Expiration_"+properties+".csv";
+		expirationLogName = "Resource and Expiration Results/05_01_Expiration_"+properties+".csv";
 		FileWriter fw2 = new FileWriter(expirationLogName);
 		PrintWriter pw2 = new PrintWriter(fw2);
 		pw2.write("time,expiration\n");
 		pw2.close();
+
+		meetingLogName = "Resource and Expiration Results/05_01_Meeting_"+properties+".csv";
+		FileWriter fw3 = new FileWriter(meetingLogName);
+		PrintWriter pw3 = new PrintWriter(fw3);
+		pw3.write("time,meeting\n");
+		pw3.close();
 
 		try (ProgressBar pb = new ProgressBar("Progress:", 100, ProgressBarStyle.ASCII)) {
 			long beginTime = events.peek().time;
@@ -351,7 +358,15 @@ public class Simulator {
 				if (recordTime < events.peek().time) {
 					fw = new FileWriter(agentLogName, true);
 					pw = new PrintWriter(fw);
-					pw.write(events.peek().time + "," + emptyAgents.size() + "," + waitingResources.size() + "\n");
+					StringBuilder emptyAgentLoc = new StringBuilder();
+					StringBuilder waitingResourceLoc = new StringBuilder();
+					for (AgentEvent e : emptyAgents) {
+						emptyAgentLoc.append(e.loc.road.id).append(" ");
+					}
+					for (ResourceEvent e : waitingResources) {
+						waitingResourceLoc.append(e.pickupLoc.road.id).append(" ");
+					}
+					pw.write(events.peek().time + "," + emptyAgentLoc + "," + waitingResourceLoc + "\n");
 					pw.close();
 					recordTime = events.peek().time;
 				}
@@ -411,17 +426,14 @@ public class Simulator {
 
 			// probably unnecessary
 			sb.append("Performance Report: " + "\n");
-			sb.append("free memory: " + format.format(freeMemory / 1024) + "\n");
-			sb.append("allocated memory: " + format.format(allocatedMemory / 1024)
-					+ "\n");
-			sb.append("max memory: " + format.format(maxMemory / 1024) + "\n");
+			sb.append("free memory: ").append(format.format(freeMemory / 1024)).append("\n");
+			sb.append("allocated memory: ").append(format.format(allocatedMemory / 1024)).append("\n");
+			sb.append("max memory: ").append(format.format(maxMemory / 1024)).append("\n");
 
 			// still looking into this one "freeMemory + (maxMemory -
 			// allocatedMemory)"
-			sb.append("total free memory: "
-					+ format.format(
-					(freeMemory + (maxMemory - allocatedMemory)) / 1024)
-					+ "\n");
+			sb.append("total free memory: ").append(format.format(
+					(freeMemory + (maxMemory - allocatedMemory)) / 1024)).append("\n");
 
 			System.out.print(sb.toString());
 		}
@@ -463,14 +475,14 @@ public class Simulator {
 					totalRemainTime += (simulationEndTime - ae.startSearchTime);
 				}
 
-				sb.append("average agent search time: " + Math.floorDiv(totalAgentSearchTime + totalRemainTime, (totalAssignments + emptyAgents.size())) + " seconds \n");
-				sb.append("average resource wait time: " + Math.floorDiv(totalResourceWaitTime, totalResources) + " seconds \n");
-				sb.append("resource expiration percentage: " + Math.floorDiv(expiredResources * 100, totalResources) + "%\n");
+				sb.append("average agent search time: ").append(Math.floorDiv(totalAgentSearchTime + totalRemainTime, (totalAssignments + emptyAgents.size()))).append(" seconds \n");
+				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, totalResources)).append(" seconds \n");
+				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, totalResources)).append("%\n");
 				sb.append("\n");
-				sb.append("average agent cruise time: " + Math.floorDiv(totalAgentCruiseTime, totalAssignments) + " seconds \n");
-				sb.append("average agent approach time: " + Math.floorDiv(totalAgentApproachTime, totalAssignments) + " seconds \n");
-				sb.append("average resource trip time: " + Math.floorDiv(totalResourceTripTime, totalAssignments) + " seconds \n");
-				sb.append("total number of assignments: " + totalAssignments + "\n");
+				sb.append("average agent cruise time: ").append(Math.floorDiv(totalAgentCruiseTime, totalAssignments)).append(" seconds \n");
+				sb.append("average agent approach time: ").append(Math.floorDiv(totalAgentApproachTime, totalAssignments)).append(" seconds \n");
+				sb.append("average resource trip time: ").append(Math.floorDiv(totalResourceTripTime, totalAssignments)).append(" seconds \n");
+				sb.append("total number of assignments: ").append(totalAssignments).append("\n");
 			} else {
 				sb.append("No resources.\n");
 			}

@@ -140,7 +140,7 @@ public class ResourceEvent extends Event {
 			this.eventCause = EXPIRED;
 			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Setup expiration event at time " + this.time, this);
 
-//			keep a record of the expired resources
+			// keep a record of the expired resources
 			String expirationLogName = simulator.expirationLogName;
 			FileWriter fw2 = new FileWriter(expirationLogName, true);
 			PrintWriter pw2 = new PrintWriter(fw2);
@@ -150,11 +150,18 @@ public class ResourceEvent extends Event {
 			return this;
 
 		} else {
-//			make assignment and update statistics
+			// make assignment and update statistics
 			long cruiseTime = time - bestAgent.startSearchTime;
 			long approachTime = earliest - time;
 			long searchTime = cruiseTime + approachTime;
 			long waitTime = earliest - availableTime;
+
+			// keep a record of meetings
+			String meetingLogName = simulator.meetingLogName;
+			FileWriter fw3 = new FileWriter(meetingLogName, true);
+			PrintWriter pw3 = new PrintWriter(fw3);
+			pw3.write(time + "," + pickupLoc.road.id + "\n");
+			pw3.close();
 
 			simulator.totalAgentCruiseTime += cruiseTime;
 			simulator.totalAgentApproachTime += approachTime;
