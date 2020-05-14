@@ -35,6 +35,7 @@ public class TimeEvent extends Event {
                         FileWriter fw1 = new FileWriter(simulator.expirationLogName, true);
                         PrintWriter pw1 = new PrintWriter(fw1);
                         pw1.write( r.expirationTime + "," + r.pickupLoc.road.id + "\n");
+                        pw1.close();
 
                         expiredEvents.add(r);
                         simulator.expiredResources ++;
@@ -100,6 +101,7 @@ public class TimeEvent extends Event {
         PrintWriter pw = new PrintWriter(fw);
         long meetTime = time + getApproachTime(a, r);
         pw.write( meetTime + "," + r.pickupLoc.road.id + "\n");
+        pw.close();
 
         long travelTimeToEndIntersection = a.time - r.time;
         long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;

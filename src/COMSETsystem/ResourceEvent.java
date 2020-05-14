@@ -100,9 +100,10 @@ public class ResourceEvent extends Event {
 	 */
 	public Event becomeAvailableHandler() throws IOException {
 		//record introduction of new resources
-		FileWriter fw = new FileWriter(this.simulator.resourceLogName, true);
+		FileWriter fw = new FileWriter(simulator.resourceLogName, true);
 		PrintWriter pw = new PrintWriter(fw);
-		pw.write(time + "," + this.pickupLoc.road.id + "\n");
+		pw.write(this.time + "," + this.pickupLoc.road.id + "\n");
+		pw.close();
 
 		//total number of resources from dataset appearing through the simulation increases
 		++simulator.totalResources;
