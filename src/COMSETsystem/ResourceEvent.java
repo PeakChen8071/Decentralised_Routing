@@ -99,12 +99,16 @@ public class ResourceEvent extends Event {
 	 * Handler of a BECOME_AVAILABLE event
 	 */
 	public Event becomeAvailableHandler() throws IOException {
+		//record introduction of new resources
+		FileWriter fw = new FileWriter(this.simulator.resourceLogName, true);
+		PrintWriter pw = new PrintWriter(fw);
+		pw.write(time + "," + this.pickupLoc.road.id + "\n");
+
 		//total number of resources from dataset appearing through the simulation increases
 		++simulator.totalResources;
 		simulator.waitingResources.add(this);
 		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Setup expiration event at time " + this.time, this);
 		return this;
-
 	}
 
 	public AgentEvent AssignToBestAgent(){
