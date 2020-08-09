@@ -14,19 +14,19 @@ public class AgentIndependent extends BaseAgent {
     static Map<Integer, Cluster> clusters;
     static ClusterTool ct;
 
-    boolean failed = true; // flag value indicating if the last agent search failed
-    boolean start = true;
-    static String searchLog;
+    boolean failed = false; // flag value indicating if the last agent search failed
+//    boolean start = true;
+//    static String searchLog;
     int timer; // create a timer for agents to record their search time, clears upon entering a new cluster
     int prev_cluster;
     long prevTime;
 
-    int planned_destination_cluster;
+//    int planned_destination_cluster;
 
-    static int [] replan_count;
-    static int [] design_to_go;
-    static int [] pickup_as_designed;
-    static int [] pickuped_by_others;
+//    static int [] replan_count;
+//    static int [] design_to_go;
+//    static int [] pickup_as_designed;
+//    static int [] pickuped_by_others;
 
     LinkedList<Intersection> route = new LinkedList<>();
 
@@ -67,36 +67,36 @@ public class AgentIndependent extends BaseAgent {
             for (int i = 0; i < totalClusterNumber; i++){
                 attract[i] = clusters.get(i).attr;
             }
-            String properties = "";
-            StringBuilder sb = new StringBuilder();
-            try {
-                Properties prop = new Properties();
-                prop.load(new FileInputStream("etc/config.properties"));
-
-                String fleetSize = prop.getProperty("comset.number_of_agents").trim();
-                sb.append(fleetSize);
-                String method = "RandomDest";
-                if (method.equals("UserExamples.AgentRandomDestination")){
-                    method = "RandomDest";
-                }else{
-                    method = "Independent";
-                }
-
-                sb.append("_");
-                sb.append(method);
-                String road_cluster_file = prop.getProperty("cluster.road_cluster_file").trim();
-                String substr = road_cluster_file.substring(12, road_cluster_file.length() - 4);
-                sb.append("_");
-                sb.append(substr);
-            }catch (IOException ioe){
-                ioe.printStackTrace();
-            }
-            properties = properties + sb.toString();
+//            String properties = "";
+//            StringBuilder sb = new StringBuilder();
+//            try {
+//                Properties prop = new Properties();
+//                prop.load(new FileInputStream("etc/config.properties"));
+//
+//                String fleetSize = prop.getProperty("comset.number_of_agents").trim();
+//                sb.append(fleetSize);
+//                String method = "RandomDest";
+//                if (method.equals("UserExamples.AgentRandomDestination")){
+//                    method = "RandomDest";
+//                }else{
+//                    method = "Independent";
+//                }
+//
+//                sb.append("_");
+//                sb.append(method);
+//                String road_cluster_file = prop.getProperty("cluster.road_cluster_file").trim();
+//                String substr = road_cluster_file.substring(12, road_cluster_file.length() - 4);
+//                sb.append("_");
+//                sb.append(substr);
+//            }catch (IOException ioe){
+//                ioe.printStackTrace();
+//            }
+//            properties = properties + sb.toString();
 //            searchLog = "Search_" + properties + "_original_dijkstra.csv";
-            replan_count = new int[clusters.size()];
-            design_to_go = new int[clusters.size()];
-            pickup_as_designed = new int[clusters.size()];
-            pickuped_by_others = new int[clusters.size()];
+//            replan_count = new int[clusters.size()];
+//            design_to_go = new int[clusters.size()];
+//            pickup_as_designed = new int[clusters.size()];
+//            pickuped_by_others = new int[clusters.size()];
         }
 
 
@@ -116,30 +116,30 @@ public class AgentIndependent extends BaseAgent {
         Cluster c = ct.getClusterFromRoad(currentLocation.road);
 
 //      this part activates another planning when the last search fails
-        if (failed){
-            if(start){
-                start = false;
-                try{
-                    PrintWriter pw = new PrintWriter(searchLog);
-                    pw.close();
-                }catch (IOException ioe){
-                    ioe.printStackTrace();
-                }
-            } else {
+//        if (failed){
+//            if(start){
+//                start = false;
+//                try{
+//                    PrintWriter pw = new PrintWriter(searchLog);
+//                    pw.close();
+//                }catch (IOException ioe){
+//                    ioe.printStackTrace();
+//                }
+//            } else {
                 //log expriation events - my modification
-                try{
-                    FileWriter fw = new FileWriter(searchLog, true); //Set true for append mode
-                    PrintWriter pw = new PrintWriter(fw);
-                    pw.write(Long.toString(currentLocation.road.id));
-                    pw.write(",");
-                    pw.close();
-                } catch (FileNotFoundException fnfe){
-                    fnfe.printStackTrace();
-                } catch (IOException ioe){
-                    ioe.printStackTrace();
-                }
-            }
-        }
+//                try{
+//                    FileWriter fw = new FileWriter(searchLog, true); //Set true for append mode
+//                    PrintWriter pw = new PrintWriter(fw);
+//                    pw.write(Long.toString(currentLocation.road.id));
+//                    pw.write(",");
+//                    pw.close();
+//                } catch (FileNotFoundException fnfe){
+//                    fnfe.printStackTrace();
+//                } catch (IOException ioe){
+//                    ioe.printStackTrace();
+//                }
+//            }
+//        }
 
         HashMap<Integer, Double> options = new HashMap<>();
         for (int i : c.nbs){
@@ -178,14 +178,14 @@ public class AgentIndependent extends BaseAgent {
         Intersection sourceIntersection = currentLocation.road.to;
         Intersection destinationIntersection = destinationRoad.to;
 
-        int destination_cluster_id = ct.getClusterFromRoad(destinationRoad).id;
+//        int destination_cluster_id = ct.getClusterFromRoad(destinationRoad).id;
         // design_to_go[destination_cluster_id] += 1;
-        planned_destination_cluster = destination_cluster_id;
+//        planned_destination_cluster = destination_cluster_id;
 
         if (sourceIntersection == destinationIntersection) {
             // destination cannot be the source
             // if destination is the source, choose a neighbor to be the destination
-            Road[] roadsFrom = sourceIntersection.roadsMapFrom.values().toArray(new Road[sourceIntersection.roadsMapFrom.values().size()]);
+            Road[] roadsFrom = sourceIntersection.roadsMapFrom.values().toArray(new Road[0]);
             destinationIntersection = roadsFrom[0].to;
         }
 
@@ -276,12 +276,12 @@ public class AgentIndependent extends BaseAgent {
     public void assignedTo(LocationOnRoad currentLocation, long currentTime, long resourceId, LocationOnRoad resourcePickupLocation, LocationOnRoad resourceDropoffLocation) {
         timer = 0;
         prevTime = -1;
-        int actual_destination_cluster_id = ct.getClusterFromRoad(resourcePickupLocation.road).id;
-        if (actual_destination_cluster_id == planned_destination_cluster){
-            pickup_as_designed[actual_destination_cluster_id] += 1;
-        }else{
-            pickuped_by_others[actual_destination_cluster_id] += 1;
-        }
+//        int actual_destination_cluster_id = ct.getClusterFromRoad(resourcePickupLocation.road).id;
+//        if (actual_destination_cluster_id == planned_destination_cluster){
+//            pickup_as_designed[actual_destination_cluster_id] += 1;
+//        }else{
+//            pickuped_by_others[actual_destination_cluster_id] += 1;
+//        }
 
         route.clear();
         failed = false;
