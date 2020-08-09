@@ -101,11 +101,11 @@ public class ResourceEvent extends Event {
 		//total number of resources from dataset appearing through the simulation increases
 		++simulator.totalResources;
 
-		String resourceLogName = simulator.resourceLogName;
-		FileWriter fw1 = new FileWriter(resourceLogName, true);
-		PrintWriter pw1 = new PrintWriter(fw1);
-		pw1.write(availableTime + "," + pickupLoc.road.id + "\n");
-		pw1.close();
+//		String resourceLogName = simulator.resourceLogName;
+//		FileWriter fw1 = new FileWriter(resourceLogName, true);
+//		PrintWriter pw1 = new PrintWriter(fw1);
+//		pw1.write(availableTime + "," + pickupLoc.road.id + "\n");
+//		pw1.close();
 
 		// finds the agent with least travel time between itself and this resource
 		AgentEvent bestAgent = null;
@@ -140,12 +140,12 @@ public class ResourceEvent extends Event {
 			this.eventCause = EXPIRED;
 			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Setup expiration event at time " + this.time, this);
 
-			// keep a record of the expired resources
-			String expirationLogName = simulator.expirationLogName;
-			FileWriter fw2 = new FileWriter(expirationLogName, true);
-			PrintWriter pw2 = new PrintWriter(fw2);
-			pw2.write(expirationTime + "," + pickupLoc.road.id + "\n");
-			pw2.close();
+//			// keep a record of the expired resources
+//			String expirationLogName = simulator.expirationLogName;
+//			FileWriter fw2 = new FileWriter(expirationLogName, true);
+//			PrintWriter pw2 = new PrintWriter(fw2);
+//			pw2.write(expirationTime + "," + pickupLoc.road.id + "\n");
+//			pw2.close();
 
 			return this;
 
@@ -156,12 +156,12 @@ public class ResourceEvent extends Event {
 			long searchTime = cruiseTime + approachTime;
 			long waitTime = earliest - availableTime;
 
-			// keep a record of meetings
-			String meetingLogName = simulator.meetingLogName;
-			FileWriter fw3 = new FileWriter(meetingLogName, true);
-			PrintWriter pw3 = new PrintWriter(fw3);
-			pw3.write(time + "," + pickupLoc.road.id + "\n");
-			pw3.close();
+//			// keep a record of meetings
+//			String meetingLogName = simulator.meetingLogName;
+//			FileWriter fw3 = new FileWriter(meetingLogName, true);
+//			PrintWriter pw3 = new PrintWriter(fw3);
+//			pw3.write(time + "," + pickupLoc.road.id + "\n");
+//			pw3.close();
 
 			simulator.totalAgentCruiseTime += cruiseTime;
 			simulator.totalAgentApproachTime += approachTime;
