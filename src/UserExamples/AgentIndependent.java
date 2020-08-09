@@ -92,7 +92,7 @@ public class AgentIndependent extends BaseAgent {
                 ioe.printStackTrace();
             }
             properties = properties + sb.toString();
-            searchLog = "Search_" + properties + "_original_dijkstra.csv";
+//            searchLog = "Search_" + properties + "_original_dijkstra.csv";
             replan_count = new int[clusters.size()];
             design_to_go = new int[clusters.size()];
             pickup_as_designed = new int[clusters.size()];

@@ -93,10 +93,10 @@ public class Simulator {
 	// The number of assignments that have been made.
 	public long totalAssignments = 0;
 
-	// The output file names to record the time and location of resource introduction/expiration
-	public String resourceLogName = "";
-	public String expirationLogName = "";
-	public String meetingLogName = "";
+//	// The output file names to record the time and location of resource introduction/expiration
+//	public String resourceLogName = "";
+//	public String expirationLogName = "";
+//	public String meetingLogName = "";
 
 	// A list of all the agents in the system. Not really used in COMSET, but maintained for
 	// a user's debugging purposes.
@@ -321,56 +321,56 @@ public class Simulator {
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 		}
-		properties = properties + sb.toString();
-		String agentLogName = "Resource and Expiration Results/05_01_Agents_" + properties + ".csv";
-		FileWriter fw = new FileWriter(agentLogName);
-		PrintWriter pw = new PrintWriter(fw);
-		pw.write("time,empty_agents,waiting_resources\n");
-		pw.close();
+//		properties = properties + sb.toString();
+//		String agentLogName = "Resource and Expiration Results/05_01_Agents_" + properties + ".csv";
+//		FileWriter fw = new FileWriter(agentLogName);
+//		PrintWriter pw = new PrintWriter(fw);
+//		pw.write("time,empty_agents,waiting_resources\n");
+//		pw.close();
 
-		resourceLogName = "Resource and Expiration Results/05_01_Resources_" + properties + ".csv";
-		FileWriter fw1 = new FileWriter(resourceLogName);
-		PrintWriter pw1 = new PrintWriter(fw1);
-		pw1.write("time,new_resource\n");
-		pw1.close();
+//		resourceLogName = "Resource and Expiration Results/05_01_Resources_" + properties + ".csv";
+//		FileWriter fw1 = new FileWriter(resourceLogName);
+//		PrintWriter pw1 = new PrintWriter(fw1);
+//		pw1.write("time,new_resource\n");
+//		pw1.close();
 
-		expirationLogName = "Resource and Expiration Results/05_01_Expiration_"+properties+".csv";
-		FileWriter fw2 = new FileWriter(expirationLogName);
-		PrintWriter pw2 = new PrintWriter(fw2);
-		pw2.write("time,expiration\n");
-		pw2.close();
+//		expirationLogName = "Resource and Expiration Results/05_01_Expiration_"+properties+".csv";
+//		FileWriter fw2 = new FileWriter(expirationLogName);
+//		PrintWriter pw2 = new PrintWriter(fw2);
+//		pw2.write("time,expiration\n");
+//		pw2.close();
 
-		meetingLogName = "Resource and Expiration Results/05_01_Meeting_"+properties+".csv";
-		FileWriter fw3 = new FileWriter(meetingLogName);
-		PrintWriter pw3 = new PrintWriter(fw3);
-		pw3.write("time,meeting\n");
-		pw3.close();
+//		meetingLogName = "Resource and Expiration Results/05_01_Meeting_"+properties+".csv";
+//		FileWriter fw3 = new FileWriter(meetingLogName);
+//		PrintWriter pw3 = new PrintWriter(fw3);
+//		pw3.write("time,meeting\n");
+//		pw3.close();
 
 		try (ProgressBar pb = new ProgressBar("Progress:", 100, ProgressBarStyle.ASCII)) {
 			long beginTime = events.peek().time;
 			events.add(new TimeEvent(beginTime, this));
-			long recordTime = events.peek().time;
+//			long recordTime = events.peek().time;
 
 			while (events.peek().time <= simulationEndTime) {
 				Event toTrigger = events.poll();
 				pb.stepTo((long)(((float)(toTrigger.time - beginTime)) / (simulationEndTime - beginTime) * 100.0));
 
 			//	create output file to record the number of available agent when an agent event is triggered
-				if (recordTime < events.peek().time) {
-					fw = new FileWriter(agentLogName, true);
-					pw = new PrintWriter(fw);
-					StringBuilder emptyAgentLoc = new StringBuilder();
-					StringBuilder waitingResourceLoc = new StringBuilder();
-					for (AgentEvent e : emptyAgents) {
-						emptyAgentLoc.append(e.loc.road.id).append(" ");
-					}
-					for (ResourceEvent e : waitingResources) {
-						waitingResourceLoc.append(e.pickupLoc.road.id).append(" ");
-					}
-					pw.write(events.peek().time + "," + emptyAgentLoc + "," + waitingResourceLoc + "\n");
-					pw.close();
-					recordTime = events.peek().time;
-				}
+//				if (recordTime < events.peek().time) {
+//					fw = new FileWriter(agentLogName, true);
+//					pw = new PrintWriter(fw);
+//					StringBuilder emptyAgentLoc = new StringBuilder();
+//					StringBuilder waitingResourceLoc = new StringBuilder();
+//					for (AgentEvent e : emptyAgents) {
+//						emptyAgentLoc.append(e.loc.road.id).append(" ");
+//					}
+//					for (ResourceEvent e : waitingResources) {
+//						waitingResourceLoc.append(e.pickupLoc.road.id).append(" ");
+//					}
+//					pw.write(events.peek().time + "," + emptyAgentLoc + "," + waitingResourceLoc + "\n");
+//					pw.close();
+//					recordTime = events.peek().time;
+//				}
 
 				Event e = toTrigger.trigger();
 				if (e != null) {

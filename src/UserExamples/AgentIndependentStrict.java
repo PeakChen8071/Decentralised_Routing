@@ -16,7 +16,7 @@ public class AgentIndependentStrict extends BaseAgent {
 
     boolean failed = true;
     boolean start = true;
-    static String searchLog;
+//    static String searchLog;
     int timer;
     int prev_cluster;
     long prev_time;
@@ -79,8 +79,8 @@ public class AgentIndependentStrict extends BaseAgent {
             }catch (IOException ioe){
                 ioe.printStackTrace();
             }
-            properties = properties + sb.toString();
-            searchLog = "Search_"+properties+"_original_dijkstra.csv";
+//            properties = properties + sb.toString();
+//            searchLog = "Search_"+properties+"_original_dijkstra.csv";
             replan_count = new int[clusters.size()];
             design_to_go = new int[clusters.size()];
             pickup_as_designed = new int[clusters.size()];
@@ -105,26 +105,26 @@ public class AgentIndependentStrict extends BaseAgent {
         if (failed){
             if(start){
                 start = false;
-                try{
-                    PrintWriter pw = new PrintWriter(searchLog);
-                    pw.close();
-                }catch (IOException ioe){
-                    ioe.printStackTrace();
-
-                }
-            }else{
-                //log expriation events - my modification
-                try{
-                    FileWriter fw = new FileWriter(searchLog, true); //Set true for append mode
-                    PrintWriter pw = new PrintWriter(fw);
-                    pw.write(Long.toString(currentLocation.road.id));
-                    pw.write(",");
-                    pw.close();
-                }catch (FileNotFoundException fnfe){
-                    fnfe.printStackTrace();
-                }catch (IOException ioe){
-                    ioe.printStackTrace();
-                }
+//                try{
+//                    PrintWriter pw = new PrintWriter(searchLog);
+//                    pw.close();
+//                }catch (IOException ioe){
+//                    ioe.printStackTrace();
+//
+//                }
+//            }else{
+//                //log expriation events - my modification
+//                try{
+//                    FileWriter fw = new FileWriter(searchLog, true); //Set true for append mode
+//                    PrintWriter pw = new PrintWriter(fw);
+//                    pw.write(Long.toString(currentLocation.road.id));
+//                    pw.write(",");
+//                    pw.close();
+//                }catch (FileNotFoundException fnfe){
+//                    fnfe.printStackTrace();
+//                }catch (IOException ioe){
+//                    ioe.printStackTrace();
+//                }
             }
         }
 

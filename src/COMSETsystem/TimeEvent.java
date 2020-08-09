@@ -31,11 +31,11 @@ public class TimeEvent extends Event {
             for (ResourceEvent r: resourceEvents){
                 if (time > r.expirationTime){
                     if (!expiredEvents.contains(r)){
-                        //record expiration of resources
-                        FileWriter fw1 = new FileWriter(simulator.expirationLogName, true);
-                        PrintWriter pw1 = new PrintWriter(fw1);
-                        pw1.write( r.expirationTime + "," + r.pickupLoc.road.id + "\n");
-                        pw1.close();
+//                        //record expiration of resources
+//                        FileWriter fw1 = new FileWriter(simulator.expirationLogName, true);
+//                        PrintWriter pw1 = new PrintWriter(fw1);
+//                        pw1.write( r.expirationTime + "," + r.pickupLoc.road.id + "\n");
+//                        pw1.close();
 
                         expiredEvents.add(r);
                         simulator.expiredResources ++;
@@ -96,12 +96,12 @@ public class TimeEvent extends Event {
 
     private void AssignAgentToResource(AgentEvent a, ResourceEvent r) throws IOException {
 
-        //record meeting/assignment of resource to agent
-        FileWriter fw = new FileWriter(simulator.meetingLogName, true);
-        PrintWriter pw = new PrintWriter(fw);
-        long meetTime = time + getApproachTime(a, r);
-        pw.write( meetTime + "," + r.pickupLoc.road.id + "\n");
-        pw.close();
+//        //record meeting/assignment of resource to agent
+//        FileWriter fw = new FileWriter(simulator.meetingLogName, true);
+//        PrintWriter pw = new PrintWriter(fw);
+//        long meetTime = time + getApproachTime(a, r);
+//        pw.write( meetTime + "," + r.pickupLoc.road.id + "\n");
+//        pw.close();
 
         long travelTimeToEndIntersection = a.time - r.time;
         long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;

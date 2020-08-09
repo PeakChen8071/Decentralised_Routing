@@ -99,11 +99,11 @@ public class ResourceEvent extends Event {
 	 * Handler of a BECOME_AVAILABLE event
 	 */
 	public Event becomeAvailableHandler() throws IOException {
-		//record introduction of new resources
-		FileWriter fw = new FileWriter(simulator.resourceLogName, true);
-		PrintWriter pw = new PrintWriter(fw);
-		pw.write(this.time + "," + this.pickupLoc.road.id + "\n");
-		pw.close();
+//		//record introduction of new resources
+//		FileWriter fw = new FileWriter(simulator.resourceLogName, true);
+//		PrintWriter pw = new PrintWriter(fw);
+//		pw.write(this.time + "," + this.pickupLoc.road.id + "\n");
+//		pw.close();
 
 		//total number of resources from dataset appearing through the simulation increases
 		++simulator.totalResources;
