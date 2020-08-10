@@ -1,8 +1,8 @@
 package COMSETsystem;
 
 public class ProbabilityMatrix {
-    int Version;
-    double[][] Matrix;
+    public int Version;
+    public double[][] Matrix;
 
     public ProbabilityMatrix(double[][] matrix) {
         Version = 0;

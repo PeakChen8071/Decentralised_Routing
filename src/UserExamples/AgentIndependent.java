@@ -2,24 +2,27 @@ package UserExamples;
 
 import COMSETsystem.*;
 import CustomDataParsing.RoadClusterParser;
+import org.apache.commons.compress.archivers.zip.ScatterZipOutputStream;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 public class AgentIndependent extends BaseAgent {
-    static double[] attract;
+//    static double[] attract;
 
     static ChoiceModel choiceModel;
     static RoadClusterParser rcp;
     static Map<Integer, Cluster> clusters;
     static ClusterTool ct;
 
-    boolean failed = false; // flag value indicating if the last agent search failed
+//    boolean failed = false; // flag value indicating if the last agent search failed
 //    boolean start = true;
 //    static String searchLog;
-    int timer; // create a timer for agents to record their search time, clears upon entering a new cluster
-    int prev_cluster;
-    long prevTime;
+//    int timer; // create a timer for agents to record their search time, clears upon entering a new cluster
+//    int prev_cluster;
+//    long prevTime;
 
 //    int planned_destination_cluster;
 
@@ -47,28 +50,25 @@ public class AgentIndependent extends BaseAgent {
 
     public AgentIndependent(long id, CityMap map) {
         super(id, map);
-        timer = 0;
-        prev_cluster = -1;
-        prevTime = -1;
-        int totalClusterNumber = 0;
-
+//        timer = 0;
+//        prev_cluster = -1;
+//        prevTime = -1;
         if (choiceModel == null) choiceModel = new ChoiceModel(0.4); //dummy, won't use.
 
         if (rcp == null) {
             rcp = new RoadClusterParser(map);
             clusters = rcp.parseRoadClusterFile();
-            totalClusterNumber = clusters.size();
         }
 
         if (ct == null) {
             ct = new ClusterTool(map, clusters, choiceModel);
         }
 
-        if (attract == null) {
-            attract = new double[totalClusterNumber];
-            for (int i = 0; i < totalClusterNumber; i++) {
-                attract[i] = clusters.get(i).attr;
-            }
+//        if (attract == null) {
+//            attract = new double[totalClusterNumber];
+//            for (int i = 0; i < totalClusterNumber; i++) {
+//                attract[i] = clusters.get(i).attr;
+//            }
 //            String properties = "";
 //            StringBuilder sb = new StringBuilder();
 //            try {
@@ -99,11 +99,13 @@ public class AgentIndependent extends BaseAgent {
 //            design_to_go = new int[clusters.size()];
 //            pickup_as_designed = new int[clusters.size()];
 //            pickuped_by_others = new int[clusters.size()];
-        }
-
+//          }
     }
+
     @Override
     public void planSearchRoute(LocationOnRoad currentLocation, long currentTime) {
+
+        Cluster c = ct.getClusterFromRoad(currentLocation.road);
 //        if(id % 10000 == 0){
 //            System.out.println("Replan");
 //            System.out.println(Arrays.toString(replan_count));
@@ -114,7 +116,6 @@ public class AgentIndependent extends BaseAgent {
 //            System.out.println("Pickuped by others");
 //            System.out.println(Arrays.toString(pickuped_by_others));
 //        }
-        Cluster c = ct.getClusterFromRoad(currentLocation.road);
 
 //      this part activates another planning when the last search fails
 //        if (failed){
@@ -157,7 +158,17 @@ public class AgentIndependent extends BaseAgent {
 //        }
 //        int target = choiceModel.choiceByProbability(options);
 
-        int target = choiceModel.getRandomFromSet(clusters.keySet()); // randomly choose a cluster
+//        int target = choiceModel.getRandomFromSet(clusters.keySet()); // randomly choose a cluster
+        int target;
+        if (map.simulator.probabilityTable.Version == 0) {
+            target = choiceModel.getRandomFromSet(clusters.keySet());
+        } else {
+            HashMap<Integer, Double> options = new HashMap<>();
+            for (int i = 0; i < clusters.size(); i++) {
+                options.put(i, map.simulator.probabilityTable.Matrix[i][c.id]);
+            }
+            target = choiceModel.choiceByProbability(options);
+        }
         Cluster dest = clusters.get(target);
 
 //        // can manually overwrite the destination cluster here.
@@ -196,9 +207,9 @@ public class AgentIndependent extends BaseAgent {
         route = map.bestCrusiseTimePath(sourceIntersection, destinationIntersection);
 //        route = map.shortestTravelTimePath(sourceIntersection, destinationIntersection);
 
-        timer = 0;
-        prevTime = currentTime;
-        failed = true;
+//        timer = 0;
+//        prevTime = currentTime;
+//        failed = true;
 //        canpickup = false; // modify "canpickup" here and in the "nextIntersection" method to limit pick-up locations
         route.poll();
     }
@@ -206,21 +217,21 @@ public class AgentIndependent extends BaseAgent {
     @Override
     public Intersection nextIntersection(LocationOnRoad currentLocation, long currentTime) {
 
-        timer += currentTime - prevTime;
+//        timer += currentTime - prevTime;
 //        if(this.id % 10 == 0){
 //            System.out.print(timer + " ");
 //        }
-        prevTime = currentTime;
+//        prevTime = currentTime;
 
-        Cluster c = ct.getClusterFromRoad(currentLocation.road);
+//        Cluster c = ct.getClusterFromRoad(currentLocation.road);
 
 //        // activate "canpickup" when the agent enters the destination cluster
 //        if (c.id == planned_destination_cluster) canpickup = true;
 
-        if (c.id != prev_cluster) {
-            prev_cluster = c.id;
-            timer = 0; // "timer" clears when agent moves to a new cluster
-        }
+//        if (c.id != prev_cluster) {
+//            prev_cluster = c.id;
+//            timer = 0; // "timer" clears when agent moves to a new cluster
+//        }
 
 //        // choose another destination if the search time limit is exceeded
 //        if (route.size() >= 1) { // && timer > c.getSearchTime()){
@@ -278,8 +289,8 @@ public class AgentIndependent extends BaseAgent {
 
     @Override
     public void assignedTo(LocationOnRoad currentLocation, long currentTime, long resourceId, LocationOnRoad resourcePickupLocation, LocationOnRoad resourceDropoffLocation) {
-        timer = 0;
-        prevTime = -1;
+//        timer = 0;
+//        prevTime = -1;
 //        int actual_destination_cluster_id = ct.getClusterFromRoad(resourcePickupLocation.road).id;
 //        if (actual_destination_cluster_id == planned_destination_cluster){
 //            pickup_as_designed[actual_destination_cluster_id] += 1;
@@ -288,6 +299,6 @@ public class AgentIndependent extends BaseAgent {
 //        }
 
         route.clear();
-        failed = false;
+//        failed = false;
     }
 }

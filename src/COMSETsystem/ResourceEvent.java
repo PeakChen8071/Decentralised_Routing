@@ -40,7 +40,6 @@ public class ResourceEvent extends Event {
 	// The shortest travel time from pickupLoc to dropoffLoc
 	public long tripTime;
 
-
 	/**
 	 * Constructor for class ResourceEvent.
 	 *
@@ -88,7 +87,7 @@ public class ResourceEvent extends Event {
 		}
 		if (eventCause == BECOME_AVAILABLE) {
 			Event e = becomeAvailableHandler();
-			return null;
+			return e;
 		} else {
 			expireHandler();
 			return null;
@@ -99,33 +98,36 @@ public class ResourceEvent extends Event {
 	 * Handler of a BECOME_AVAILABLE event
 	 */
 	public Event becomeAvailableHandler() throws IOException {
-//		//record introduction of new resources
-//		FileWriter fw = new FileWriter(simulator.resourceLogName, true);
-//		PrintWriter pw = new PrintWriter(fw);
-//		pw.write(this.time + "," + this.pickupLoc.road.id + "\n");
-//		pw.close();
-
 		//total number of resources from dataset appearing through the simulation increases
 		++simulator.totalResources;
-		simulator.waitingResources.add(this);
-		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Setup expiration event at time " + this.time, this);
-		return this;
-	}
 
-	public AgentEvent AssignToBestAgent(){
+//		String resourceLogName = simulator.resourceLogName;
+//		FileWriter fw1 = new FileWriter(resourceLogName, true);
+//		PrintWriter pw1 = new PrintWriter(fw1);
+//		pw1.write(availableTime + "," + pickupLoc.road.id + "\n");
+//		pw1.close();
+
 		// finds the agent with least travel time between itself and this resource
 		AgentEvent bestAgent = null;
 		long earliest = Long.MAX_VALUE;
 		LocationOnRoad bestAgentLocationOnRoad = null;
 		for (AgentEvent agent : simulator.emptyAgents) {
 
+
+			// Calculate the travel time from the agent's current location to resource.
+			// Assumption: agent.time is the arrival time at the end intersection of agent.loc.road.
+			// This assumption is true for empty agents. Notice that when agents are initially introduced
+			// to the system, they are empty and agent.time is not necessarily the time to arrive at the end intersection.
+			// However, all the agents are triggered once before the earliest resource (see MapWithData.createMapWithData).
+			// When that happens, agent.time is updated to the end intersection arrival time.
+			// Thus the assumption is still true.
 			long travelTimeToEndIntersection = agent.time - time;
 			long travelTimeFromStartIntersection = agent.loc.road.travelTime - travelTimeToEndIntersection;
 			LocationOnRoad agentLocationOnRoad = new LocationOnRoad(agent.loc.road, travelTimeFromStartIntersection);
 
 			long travelTime = simulator.map.travelTimeBetween(agentLocationOnRoad, pickupLoc);
 			long arriveTime = travelTime + time;
-			if (arriveTime < earliest) {
+			if (arriveTime < earliest && travelTime <= 40) {
 				bestAgent = agent;
 				earliest = arriveTime;
 				bestAgentLocationOnRoad = agentLocationOnRoad;
@@ -137,14 +139,29 @@ public class ResourceEvent extends Event {
 			this.time += simulator.ResourceMaximumLifeTime;
 			this.eventCause = EXPIRED;
 			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Setup expiration event at time " + this.time, this);
-			return null;
-		}
 
-		if (bestAgent != null){
+//			// keep a record of the expired resources
+//			String expirationLogName = simulator.expirationLogName;
+//			FileWriter fw2 = new FileWriter(expirationLogName, true);
+//			PrintWriter pw2 = new PrintWriter(fw2);
+//			pw2.write(expirationTime + "," + pickupLoc.road.id + "\n");
+//			pw2.close();
+
+			return this;
+
+		} else {
+			// make assignment and update statistics
 			long cruiseTime = time - bestAgent.startSearchTime;
 			long approachTime = earliest - time;
 			long searchTime = cruiseTime + approachTime;
 			long waitTime = earliest - availableTime;
+
+//			// keep a record of meetings
+//			String meetingLogName = simulator.meetingLogName;
+//			FileWriter fw3 = new FileWriter(meetingLogName, true);
+//			PrintWriter pw3 = new PrintWriter(fw3);
+//			pw3.write(time + "," + pickupLoc.road.id + "\n");
+//			pw3.close();
 
 			simulator.totalAgentCruiseTime += cruiseTime;
 			simulator.totalAgentApproachTime += approachTime;
@@ -171,8 +188,10 @@ public class ResourceEvent extends Event {
 			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "search time = " + searchTime + " seconds.", this);
 			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "wait time = " + waitTime + " seconds.", this);
 			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next agent trigger time = " + bestAgent.time, this);
+
+			// Add the event back to the event queue.
+			return bestAgent;
 		}
-		return bestAgent;
 	}
 
 	/*

@@ -2,10 +2,7 @@ package COMSETsystem;
 
 import MapCreation.*;
 
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.text.NumberFormat;
 import java.util.*;
 import me.tongfei.progressbar.*;
@@ -93,6 +90,9 @@ public class Simulator {
 	// The number of assignments that have been made.
 	public long totalAssignments = 0;
 
+	// Probability Matrix and Clusters
+	public Map<Integer, Integer> roadToCluster;
+	public HashSet<Integer> clusterSet;
 	public ProbabilityMatrix probabilityTable;
 
 //	// The output file names to record the time and location of resource introduction/expiration
@@ -148,6 +148,28 @@ public class Simulator {
 
 		this.resourceFile = resourceFile;
 
+		// Read cluster file and Create an empty probability table (Version 0)
+		if (roadToCluster == null) {
+			roadToCluster = new HashMap<>();
+			clusterSet = new HashSet<>();
+			try {
+				Properties prop = new Properties();
+				prop.load(new FileInputStream("etc/config.properties"));
+				String clusterFile = prop.getProperty("cluster.road_cluster_file").trim();
+
+				BufferedReader br = new BufferedReader(new FileReader("././" + clusterFile));
+				String line = br.readLine(); // skips headers
+				while ((line = br.readLine()) != null) {
+					String[] values = line.split(",");
+					roadToCluster.put(Integer.parseInt(values[0]), Integer.parseInt(values[1]));
+					clusterSet.add(Integer.parseInt(values[1]));
+				}
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			}
+		}
+		this.probabilityTable = new ProbabilityMatrix(new double[clusterSet.size()][clusterSet.size()]);
+
 		MapCreator creator = new MapCreator(this.mapJSONFile, this.boundingPolygonKMLFile, speedReduction);
 		System.out.println("Creating the map...");
 
@@ -174,12 +196,12 @@ public class Simulator {
 		System.out.println("Loading and map-matching resources...");
 		long latestResourceTime = mapWD.createMapWithData(this);
 		System.out.println("latest resource time: " + latestResourceTime);
+
 		// The simulation end time is the expiration time of the last resource.
 		this.simulationEndTime = latestResourceTime;
 
 		// Deploy agents at random locations of the map.
 		System.out.println("Randomly placing " + this.totalAgents + " agents on the map...");
-
 
 		// Manipulate the starting position of agents
 		agents = mapWD.placeAgentsRandomly(this);
@@ -298,31 +320,31 @@ public class Simulator {
 			System.out.println("map is null at beginning of run");
 		}
 
-		String properties = "";
-		StringBuilder sb = new StringBuilder();
-		try {
-			Properties prop = new Properties();
-			prop.load(new FileInputStream("etc/config.properties"));
-			String fleetSize = prop.getProperty("comset.number_of_agents").trim();
-			sb.append(fleetSize);
-			String test_file = prop.getProperty("comset.dataset_file").trim().replaceAll(
-					"Raw_Yellow_Taxi_Data/", "_").replaceAll(".csv", "");
-			sb.append(test_file);
-			String method = prop.getProperty("comset.agent_class").trim();
-			if (method.equals("UserExamples.AgentRandomDestination")){
-				method = "RandomDest";
-			}else{
-				method = "Independent";
-			}
-			sb.append("_");
-			sb.append(method);
-			String road_cluster_file = prop.getProperty("cluster.road_cluster_file").trim();
-			String substr = road_cluster_file.substring(12,road_cluster_file.length()-4);
-			sb.append("_");
-			sb.append(substr);
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
+//		String properties = "";
+//		StringBuilder sb = new StringBuilder();
+//		try {
+//			Properties prop = new Properties();
+//			prop.load(new FileInputStream("etc/config.properties"));
+//			String fleetSize = prop.getProperty("comset.number_of_agents").trim();
+//			sb.append(fleetSize);
+//			String test_file = prop.getProperty("comset.dataset_file").trim().replaceAll(
+//					"Raw_Yellow_Taxi_Data/", "_").replaceAll(".csv", "");
+//			sb.append(test_file);
+//			String method = prop.getProperty("comset.agent_class").trim();
+//			if (method.equals("UserExamples.AgentRandomDestination")){
+//				method = "RandomDest";
+//			}else{
+//				method = "Independent";
+//			}
+//			sb.append("_");
+//			sb.append(method);
+//			String road_cluster_file = prop.getProperty("cluster.road_cluster_file").trim();
+//			String substr = road_cluster_file.substring(12,road_cluster_file.length()-4);
+//			sb.append("_");
+//			sb.append(substr);
+//		} catch (IOException ioe) {
+//			ioe.printStackTrace();
+//		}
 //		properties = properties + sb.toString();
 //		String agentLogName = "Resource and Expiration Results/05_01_Agents_" + properties + ".csv";
 //		FileWriter fw = new FileWriter(agentLogName);
@@ -429,17 +451,14 @@ public class Simulator {
 
 			// probably unnecessary
 			sb.append("Performance Report: " + "\n");
-			sb.append("free memory: " + format.format(freeMemory / 1024) + "\n");
-			sb.append("allocated memory: " + format.format(allocatedMemory / 1024)
-					+ "\n");
-			sb.append("max memory: " + format.format(maxMemory / 1024) + "\n");
+			sb.append("free memory: ").append(format.format(freeMemory / 1024)).append("\n");
+			sb.append("allocated memory: ").append(format.format(allocatedMemory / 1024)).append("\n");
+			sb.append("max memory: ").append(format.format(maxMemory / 1024)).append("\n");
 
 			// still looking into this one "freeMemory + (maxMemory -
 			// allocatedMemory)"
-			sb.append("total free memory: "
-					+ format.format(
-					(freeMemory + (maxMemory - allocatedMemory)) / 1024)
-					+ "\n");
+			sb.append("total free memory: ").append(format.format(
+					(freeMemory + (maxMemory - allocatedMemory)) / 1024)).append("\n");
 
 			System.out.print(sb.toString());
 		}
@@ -481,14 +500,14 @@ public class Simulator {
 					totalRemainTime += (simulationEndTime - ae.startSearchTime);
 				}
 
-				sb.append("average agent search time: " + Math.floorDiv(totalAgentSearchTime + totalRemainTime, (totalAssignments + emptyAgents.size())) + " seconds \n");
-				sb.append("average resource wait time: " + Math.floorDiv(totalResourceWaitTime, totalResources) + " seconds \n");
-				sb.append("resource expiration percentage: " + Math.floorDiv(expiredResources * 100, totalResources) + "%\n");
+				sb.append("average agent search time: ").append(Math.floorDiv(totalAgentSearchTime + totalRemainTime, (totalAssignments + emptyAgents.size()))).append(" seconds \n");
+				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, totalResources)).append(" seconds \n");
+				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, totalResources)).append("%\n");
 				sb.append("\n");
-				sb.append("average agent cruise time: " + Math.floorDiv(totalAgentCruiseTime, totalAssignments) + " seconds \n");
-				sb.append("average agent approach time: " + Math.floorDiv(totalAgentApproachTime, totalAssignments) + " seconds \n");
-				sb.append("average resource trip time: " + Math.floorDiv(totalResourceTripTime, totalAssignments) + " seconds \n");
-				sb.append("total number of assignments: " + totalAssignments + "\n");
+				sb.append("average agent cruise time: ").append(Math.floorDiv(totalAgentCruiseTime, totalAssignments)).append(" seconds \n");
+				sb.append("average agent approach time: ").append(Math.floorDiv(totalAgentApproachTime, totalAssignments)).append(" seconds \n");
+				sb.append("average resource trip time: ").append(Math.floorDiv(totalResourceTripTime, totalAssignments)).append(" seconds \n");
+				sb.append("total number of assignments: ").append(totalAssignments).append("\n");
 			} else {
 				sb.append("No resources.\n");
 			}

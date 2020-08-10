@@ -132,30 +132,30 @@ public class AgentRandomDestination extends BaseAgent {
 		this.cluster_id = roadClusterLookup.get(this.roadId);
 		int curTime = mapTime(currentTime);
 		if (sharedTime.size() == 1 && curTime > sharedTime.get(0) && output){
-			try {
-				PrintWriter pw = new PrintWriter("MeetingFunction.csv");
-				pw.println("cluster,time,pickup,emptyAgent,waitingResource");
-				for(int i = 0; i < clusters.size(); i++) {
-					int start = 60 * 7;
-					int end = 60 * 10;
-					for (int j = start; j < end; j += 5) {
-						pw.print(i);
-						pw.print(",");
-						pw.print(j);
-						pw.print(",");
-						pw.print(clusters.get(i).timePickup.get(j));
-						pw.print(",");
-						pw.print(clusters.get(i).timeEmptyAgent.get(j));
-						pw.print(",");
-						pw.print(clusters.get(i).timeResource.get(j));
-						pw.print("\n");
-					}
-
-				}
-				pw.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
+//			try {
+//				PrintWriter pw = new PrintWriter("MeetingFunction.csv");
+//				pw.println("cluster,time,pickup,emptyAgent,waitingResource");
+//				for(int i = 0; i < clusters.size(); i++) {
+//					int start = 60 * 7;
+//					int end = 60 * 10;
+//					for (int j = start; j < end; j += 5) {
+//						pw.print(i);
+//						pw.print(",");
+//						pw.print(j);
+//						pw.print(",");
+//						pw.print(clusters.get(i).timePickup.get(j));
+//						pw.print(",");
+//						pw.print(clusters.get(i).timeEmptyAgent.get(j));
+//						pw.print(",");
+//						pw.print(clusters.get(i).timeResource.get(j));
+//						pw.print("\n");
+//					}
+//
+//				}
+//				pw.close();
+//			} catch (FileNotFoundException e) {
+//				e.printStackTrace();
+//			}
 
 			output= false;
 		} else if (sharedTime.size() > 0 && curTime > sharedTime.get(0)) {
