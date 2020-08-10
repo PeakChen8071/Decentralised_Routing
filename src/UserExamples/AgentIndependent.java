@@ -51,20 +51,22 @@ public class AgentIndependent extends BaseAgent {
         prev_cluster = -1;
         prevTime = -1;
         int totalClusterNumber = 0;
+
         if (choiceModel == null) choiceModel = new ChoiceModel(0.4); //dummy, won't use.
 
-        if (rcp == null){
+        if (rcp == null) {
             rcp = new RoadClusterParser(map);
             clusters = rcp.parseRoadClusterFile();
             totalClusterNumber = clusters.size();
         }
-        if (ct == null){
-            ct = new ClusterTool(map, clusters, choiceModel);
 
+        if (ct == null) {
+            ct = new ClusterTool(map, clusters, choiceModel);
         }
-        if (attract == null){
+
+        if (attract == null) {
             attract = new double[totalClusterNumber];
-            for (int i = 0; i < totalClusterNumber; i++){
+            for (int i = 0; i < totalClusterNumber; i++) {
                 attract[i] = clusters.get(i).attr;
             }
 //            String properties = "";
@@ -98,7 +100,6 @@ public class AgentIndependent extends BaseAgent {
 //            pickup_as_designed = new int[clusters.size()];
 //            pickuped_by_others = new int[clusters.size()];
         }
-
 
     }
     @Override
@@ -142,11 +143,11 @@ public class AgentIndependent extends BaseAgent {
 //        }
 
         HashMap<Integer, Double> options = new HashMap<>();
-        for (int i : c.nbs){
+        for (int i : c.nbs) {
             options.put(i, Math.exp(attract[i]));
         }
 
-        if (!failed){
+        if (!failed) {
             options.put(c.id, Math.exp(attract[c.id]));
         }
 //        for (Cluster i : clusters.values()) {
@@ -161,7 +162,7 @@ public class AgentIndependent extends BaseAgent {
 
         // randomly select a road in the destination cluster as the destination road
         HashSet<Road> roads = dest.roads;
-        if(roads == null || roads.size() == 0){
+        if(roads == null || roads.size() == 0) {
             //safety concern only
             roads = clusters.get(0).roads;
         }
@@ -213,7 +214,7 @@ public class AgentIndependent extends BaseAgent {
 //        // activate "canpickup" when the agent enters the destination cluster
 //        if (c.id == planned_destination_cluster) canpickup = true;
 
-        if (c.id != prev_cluster){
+        if (c.id != prev_cluster) {
             prev_cluster = c.id;
             timer = 0; // "timer" clears when agent moves to a new cluster
         }

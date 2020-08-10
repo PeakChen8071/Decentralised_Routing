@@ -8,9 +8,9 @@ def findV(ListR, TotalV):
     GAMMA1 = 0.304938;
     GAMMA2 = 0.224892
     Alpha = [0] * n
-    df = pd.read_csv('../../ClusterData/cluster_alpha (7 clusters).csv', header=None, index_col=0)
+    df = pd.read_csv('../../ClusterData/cluster_alpha (179 clusters).csv', header=None)
     for i in df.index:
-        Alpha[i] = df.iloc[i, 0]
+        Alpha[df.iloc[i, 0]] = df.iloc[i, 1]
 
     def f(x):
         return -np.dot(np.multiply(Alpha, np.power(ListR, GAMMA1)), np.power(x, GAMMA2))
@@ -45,6 +45,6 @@ def findM(eigenVector):
     return res.x
 
 
-R = [int(x) for x in input('List of R: ').split([',', ' '])]  # 397, 134, 11, 301, 298, 90, 7
+R = [int(x) for x in input('List of R: ').split(',')]  # 397, 134, 11, 301, 298, 90, 7
 V = int(input('Total V: '))  # 7310
 print(findM(findV(R, V)).reshape(len(R), len(R)))

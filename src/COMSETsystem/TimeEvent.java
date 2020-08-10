@@ -2,35 +2,60 @@ package COMSETsystem;
 
 
 
-import DataParsing.Resource;
+
 import org.jgrapht.Graph;
 import org.jgrapht.alg.interfaces.MatchingAlgorithm;
 import org.jgrapht.alg.matching.MaximumWeightBipartiteMatching;
 import org.jgrapht.graph.*;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
+import java.io.*;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class TimeEvent extends Event {
+
+    static Map<Integer, Integer> roadToCluster;
+    static HashSet<Integer> clusterSet;
+
     public TimeEvent(long time, Simulator simulator) throws IOException {
         super(time, simulator);
 
+        if (roadToCluster == null) {
+            roadToCluster = new HashMap<>();
+            clusterSet = new HashSet<>();
+            try {
+                Properties prop = new Properties();
+                prop.load(new FileInputStream("etc/config.properties"));
+                String clusterFile = prop.getProperty("cluster.road_cluster_file").trim();
+
+                BufferedReader br = new BufferedReader(new FileReader("././" + clusterFile));
+                String line = br.readLine(); // skips headers
+                while ((line = br.readLine()) != null) {
+                    String[] values = line.split(",");
+                    roadToCluster.put(Integer.parseInt(values[0]), Integer.parseInt(values[1]));
+                    clusterSet.add(Integer.parseInt(values[1]));
+                }
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        }
+
         TreeSet<ResourceEvent> resourceEvents = simulator.waitingResources;
         TreeSet<AgentEvent> agents = simulator.emptyAgents;
+        HashMap<Integer, Integer> clusterResourceCount = new HashMap<>();
+        for (int i=0; i<clusterSet.size(); i++) {
+            clusterResourceCount.put(i, 0);
+        }
         Graph<Event, DefaultWeightedEdge> g = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
         Set<Event> agentPartition = new HashSet<>();
         Set<Event> resourcePartition = new HashSet<>();
         HashSet<ResourceEvent> expiredEvents = new HashSet<>();
-        for (AgentEvent a: agents){
-            for (ResourceEvent r: resourceEvents){
-                if (time > r.expirationTime){
-                    if (!expiredEvents.contains(r)){
+        boolean firstAgent = true;
+        for (AgentEvent a: agents) {
+            for (ResourceEvent r: resourceEvents) {
+                if (time > r.expirationTime) {
+                    if (!expiredEvents.contains(r)) {
 //                        //record expiration of resources
 //                        FileWriter fw1 = new FileWriter(simulator.expirationLogName, true);
 //                        PrintWriter pw1 = new PrintWriter(fw1);
@@ -38,18 +63,23 @@ public class TimeEvent extends Event {
 //                        pw1.close();
 
                         expiredEvents.add(r);
-                        simulator.expiredResources ++;
+                        simulator.expiredResources++;
                         simulator.totalResourceWaitTime += simulator.ResourceMaximumLifeTime;
                     }
                     continue;
                 }
+                if (firstAgent) {
+                    int key = roadToCluster.getOrDefault((int) r.pickupLoc.road.id, 0);
+                    clusterResourceCount.put(key, clusterResourceCount.get(key) + 1);
+                }
+
                 long eta = getApproachTime(a, r);
-                if (eta < simulator.ResourceMaximumLifeTime){
+                if (eta < simulator.ResourceMaximumLifeTime) {
                     DefaultWeightedEdge e = new DefaultWeightedEdge();
-                    if (!g.containsVertex(a)){
+                    if (!g.containsVertex(a)) {
                         g.addVertex(a);
                     }
-                    if (!g.containsVertex(r)){
+                    if (!g.containsVertex(r)) {
                         g.addVertex(r);
                     }
                     g.addEdge(a, r, e);
@@ -57,9 +87,12 @@ public class TimeEvent extends Event {
                     agentPartition.add(a);
                     resourcePartition.add(r);
                 }
-
             }
+            firstAgent = false;
         }
+
+        System.out.println(agents.size());
+        System.out.println(clusterResourceCount.values());
 
         simulator.waitingResources.removeAll(expiredEvents);
         //        System.out.println("Number of agent"+agents.size());
@@ -69,16 +102,15 @@ public class TimeEvent extends Event {
         MatchingAlgorithm.Matching<Event, DefaultWeightedEdge> matching =  matchObject.getMatching();
         //        System.out.println("Number of matches "+matching.getEdges().size());
 
-        for (DefaultWeightedEdge e: matching){
+        for (DefaultWeightedEdge e : matching) {
             AgentEvent agent = (AgentEvent) g.getEdgeSource(e);
             ResourceEvent resource = (ResourceEvent) g.getEdgeTarget(e);
             AssignAgentToResource(agent, resource);
             simulator.events.remove(resource);
         }
-
     }
 
-    private long getApproachTime(AgentEvent a, ResourceEvent r){
+    private long getApproachTime(AgentEvent a, ResourceEvent r) {
         long travelTimeToEndIntersection = a.time - r.time;
 //        System.out.println("A time r time: "+ a.time + " "+r.time);
         long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;
@@ -90,8 +122,9 @@ public class TimeEvent extends Event {
 
     @Override
     Event trigger() throws Exception {
+        // Define time interval for repeating triggers here, in seconds
         //        System.out.println("Time "+time);
-        return new TimeEvent(this.time+10, simulator);
+        return new TimeEvent(this.time + 300, simulator);
     }
 
     private void AssignAgentToResource(AgentEvent a, ResourceEvent r) throws IOException {
