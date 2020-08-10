@@ -93,6 +93,8 @@ public class Simulator {
 	// The number of assignments that have been made.
 	public long totalAssignments = 0;
 
+	public ProbabilityMatrix probabilityTable;
+
 //	// The output file names to record the time and location of resource introduction/expiration
 //	public String resourceLogName = "";
 //	public String expirationLogName = "";

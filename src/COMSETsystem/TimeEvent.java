@@ -17,7 +17,7 @@ public class TimeEvent extends Event {
 
     static Map<Integer, Integer> roadToCluster;
     static HashSet<Integer> clusterSet;
-    static int hashcode;
+    static int version;
 
     public TimeEvent(long time, Simulator simulator) throws IOException, InterruptedException {
         super(time, simulator);
@@ -25,7 +25,7 @@ public class TimeEvent extends Event {
         if (roadToCluster == null) {
             roadToCluster = new HashMap<>();
             clusterSet = new HashSet<>();
-            hashcode = 0;
+            version = 0;
             try {
                 Properties prop = new Properties();
                 prop.load(new FileInputStream("etc/config.properties"));
@@ -98,7 +98,7 @@ public class TimeEvent extends Event {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile))) {
             String sb = clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
                     agents.size() + "\n" +
-                    "hashcode," + hashcode;
+                    "hashcode," + version;
             writer.write(sb);
         } catch (IOException e) {
             e.printStackTrace();
@@ -117,7 +117,7 @@ public class TimeEvent extends Event {
 //            Thread.sleep(1000);
 //        }
 
-        File matrixFile = new File("Optimiser IO/output_" + hashcode + ".csv");
+        File matrixFile = new File("Optimiser IO/output_" + version + ".csv");
         BufferedReader br = new BufferedReader(new FileReader(matrixFile));
         String line;
         int lineIdx = 0;
@@ -128,7 +128,13 @@ public class TimeEvent extends Event {
             }
             lineIdx++;
         }
-        hashcode++;
+
+        if (simulator.probabilityTable == null) {
+            simulator.probabilityTable = new ProbabilityMatrix(transitionMatrix);
+        } else {
+            simulator.probabilityTable.updateMatrix(version, transitionMatrix);
+        }
+        version++;
 
         simulator.waitingResources.removeAll(expiredEvents);
         
