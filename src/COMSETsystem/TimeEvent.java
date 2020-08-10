@@ -9,8 +9,6 @@ import org.jgrapht.alg.matching.MaximumWeightBipartiteMatching;
 import org.jgrapht.graph.*;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,7 +19,7 @@ public class TimeEvent extends Event {
     static HashSet<Integer> clusterSet;
     static int hashcode;
 
-    public TimeEvent(long time, Simulator simulator) throws IOException {
+    public TimeEvent(long time, Simulator simulator) throws IOException, InterruptedException {
         super(time, simulator);
 
         if (roadToCluster == null) {
@@ -47,7 +45,7 @@ public class TimeEvent extends Event {
 
         TreeSet<ResourceEvent> resourceEvents = simulator.waitingResources;
         TreeSet<AgentEvent> agents = simulator.emptyAgents;
-        HashMap<Integer, Integer> clusterResourceCount = new HashMap<>();
+        TreeMap<Integer, Integer> clusterResourceCount = new TreeMap<>();
         for (int i=0; i<clusterSet.size(); i++) {
             clusterResourceCount.put(i, 0);
         }
@@ -95,22 +93,45 @@ public class TimeEvent extends Event {
             firstAgent = false;
         }
 
-        // Output to "Optimiser IO" for Python solver
+        // Java output to "Optimiser IO" for Python solver
         File inputFile = new File("Optimiser IO/input.csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile))) {
             String sb = clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
                     agents.size() + "\n" +
                     "hashcode," + hashcode;
             writer.write(sb);
-            hashcode++;
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         // Run Python Optimiser and fetch output matrix as probability table
+        ProcessBuilder pb = new ProcessBuilder("python", "S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\src\\UserExamples\\Optimiser.py");
+        pb.start().waitFor();
 
+//        int T = 0;
+//        while (T < 60) {
+//            if (checkOutput(hashcode)) {
+//                break;
+//            }
+//            T++;
+//            Thread.sleep(1000);
+//        }
+
+        File matrixFile = new File("Optimiser IO/output_" + hashcode + ".csv");
+        BufferedReader br = new BufferedReader(new FileReader(matrixFile));
+        String line;
+        int lineIdx = 0;
+        double[][] transitionMatrix = new double[clusterSet.size()][clusterSet.size()];
+        while (!((line = br.readLine()) == null) && !line.contains("hashcode")) {
+            for (int i=0; i<line.split(",").length; i++) {
+                transitionMatrix[lineIdx][i] = Double.parseDouble(line.split(",")[i]);
+            }
+            lineIdx++;
+        }
+        hashcode++;
 
         simulator.waitingResources.removeAll(expiredEvents);
+        
         //        System.out.println("Number of agent"+agents.size());
         //        System.out.println("Number of resources"+resourceEvents.size());
         MaximumWeightBipartiteMatching matchObject = new MaximumWeightBipartiteMatching(g, agentPartition, resourcePartition);
@@ -124,6 +145,21 @@ public class TimeEvent extends Event {
             AssignAgentToResource(agent, resource);
             simulator.events.remove(resource);
         }
+    }
+
+    private boolean checkOutput(int hashcode) throws IOException {
+        File outputFile = new File("Optimiser IO/output_" + hashcode + ".csv");
+        try (BufferedReader br = new BufferedReader(new FileReader(outputFile))) {
+            String lastline = null, line;
+            while ((line = br.readLine()) != null) {
+                lastline = line;
+            }
+            assert lastline != null;
+            if ((Integer.parseInt(lastline.split(",")[1]) == hashcode)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private long getApproachTime(AgentEvent a, ResourceEvent r) {
@@ -189,7 +225,6 @@ public class TimeEvent extends Event {
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "search time = " + searchTime + " seconds.", this);
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "wait time = " + waitTime + " seconds.", this);
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next agent trigger time = " + a.time, this);
-
     }
 
 }

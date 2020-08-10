@@ -5,10 +5,10 @@ import pandas as pd
 
 def findV(ListR, TotalV):
     n = len(ListR)
-    GAMMA1 = 0.304938;
+    GAMMA1 = 0.304938
     GAMMA2 = 0.224892
     Alpha = [0] * n
-    df = pd.read_csv('../../ClusterData/cluster_alpha (7 clusters).csv', header=None)
+    df = pd.read_csv('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\ClusterData\\cluster_alpha (7 clusters).csv', header=None)
     for i in df.index:
         Alpha[df.iloc[i, 0]] = df.iloc[i, 1]
 
@@ -45,13 +45,14 @@ def findM(eigenVector):
     return res.x
 
 
-javaDf = pd.read_csv('../../Optimiser IO/input.csv', header=None)
+javaDf = pd.read_csv('S:\\USYD\Research\\Decentralised Cruising\\Taxi\\Optimiser IO\\input.csv', header=None)
 R = javaDf.iloc[0, :].astype(int).tolist()
 V = int(javaDf.iloc[1, 0])
 hashCode = int(javaDf.iloc[2, 1])
     
-np.savetxt('../../Optimiser IO/output_{}.csv'.format(hashCode),
+np.savetxt('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\Optimiser IO\\output_{}.csv'.format(hashCode),
             findM(findV(R, V)).reshape(len(R), len(R)), delimiter=',')
 
-with open('../../Optimiser IO/output_{}.csv'.format(hashCode),'a') as fd:
+with open('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\Optimiser IO\\output_{}.csv'.format(hashCode),'a') as fd:
     fd.write('hashcode,{}'.format(hashCode))
+    
