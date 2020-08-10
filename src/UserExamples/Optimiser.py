@@ -8,7 +8,7 @@ def findV(ListR, TotalV):
     GAMMA1 = 0.304938;
     GAMMA2 = 0.224892
     Alpha = [0] * n
-    df = pd.read_csv('../../ClusterData/cluster_alpha (179 clusters).csv', header=None)
+    df = pd.read_csv('../../ClusterData/cluster_alpha (7 clusters).csv', header=None)
     for i in df.index:
         Alpha[df.iloc[i, 0]] = df.iloc[i, 1]
 
@@ -18,9 +18,9 @@ def findV(ListR, TotalV):
     eq_cons = {'type': 'eq',
                'fun': lambda x: np.array([sum(x) - TotalV])}
 
-    x0 = [V / n] * n
+    x0 = [TotalV / n] * n
 
-    bounds = scipy.optimize.Bounds([0] * n, [V] * n)
+    bounds = scipy.optimize.Bounds([0] * n, [TotalV] * n)
 
     res = scipy.optimize.minimize(f, x0, method='SLSQP', constraints=[eq_cons],
                                   options={'ftol': 1e-9, 'maxiter': 100 * len(x0)}, bounds=bounds)
@@ -45,6 +45,13 @@ def findM(eigenVector):
     return res.x
 
 
-R = [int(x) for x in input('List of R: ').split(',')]  # 397, 134, 11, 301, 298, 90, 7
-V = int(input('Total V: '))  # 7310
-print(findM(findV(R, V)).reshape(len(R), len(R)))
+javaDf = pd.read_csv('../../Optimiser IO/input.csv', header=None)
+R = javaDf.iloc[0, :].astype(int).tolist()
+V = int(javaDf.iloc[1, 0])
+hashCode = int(javaDf.iloc[2, 1])
+    
+np.savetxt('../../Optimiser IO/output_{}.csv'.format(hashCode),
+            findM(findV(R, V)).reshape(len(R), len(R)), delimiter=',')
+
+with open('../../Optimiser IO/output_{}.csv'.format(hashCode),'a') as fd:
+    fd.write('hashcode,{}'.format(hashCode))

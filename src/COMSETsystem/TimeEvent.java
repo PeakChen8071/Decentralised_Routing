@@ -9,6 +9,8 @@ import org.jgrapht.alg.matching.MaximumWeightBipartiteMatching;
 import org.jgrapht.graph.*;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,6 +19,7 @@ public class TimeEvent extends Event {
 
     static Map<Integer, Integer> roadToCluster;
     static HashSet<Integer> clusterSet;
+    static int hashcode;
 
     public TimeEvent(long time, Simulator simulator) throws IOException {
         super(time, simulator);
@@ -24,6 +27,7 @@ public class TimeEvent extends Event {
         if (roadToCluster == null) {
             roadToCluster = new HashMap<>();
             clusterSet = new HashSet<>();
+            hashcode = 0;
             try {
                 Properties prop = new Properties();
                 prop.load(new FileInputStream("etc/config.properties"));
@@ -91,8 +95,20 @@ public class TimeEvent extends Event {
             firstAgent = false;
         }
 
-        System.out.println(agents.size());
-        System.out.println(clusterResourceCount.values());
+        // Output to "Optimiser IO" for Python solver
+        File inputFile = new File("Optimiser IO/input.csv");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile))) {
+            String sb = clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
+                    agents.size() + "\n" +
+                    "hashcode," + hashcode;
+            writer.write(sb);
+            hashcode++;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Run Python Optimiser and fetch output matrix as probability table
+
 
         simulator.waitingResources.removeAll(expiredEvents);
         //        System.out.println("Number of agent"+agents.size());

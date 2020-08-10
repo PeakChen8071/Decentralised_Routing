@@ -142,19 +142,22 @@ public class AgentIndependent extends BaseAgent {
 //            }
 //        }
 
-        HashMap<Integer, Double> options = new HashMap<>();
-        for (int i : c.nbs) {
-            options.put(i, Math.exp(attract[i]));
-        }
+        // Logistic Choice Model
+//        HashMap<Integer, Double> options = new HashMap<>();
+//        for (int i : c.nbs) {
+//            options.put(i, Math.exp(attract[i]));
+//        }
+//
+//        if (!failed) {
+//            options.put(c.id, Math.exp(attract[c.id]));
+//        }
 
-        if (!failed) {
-            options.put(c.id, Math.exp(attract[c.id]));
-        }
 //        for (Cluster i : clusters.values()) {
 //            options.put(i.id, attract[i.id]);
 //        }
+//        int target = choiceModel.choiceByProbability(options);
 
-        int target = choiceModel.choiceByProbability(options);
+        int target = choiceModel.getRandomFromSet(clusters.keySet()); // randomly choose a cluster
         Cluster dest = clusters.get(target);
 
 //        // can manually overwrite the destination cluster here.
