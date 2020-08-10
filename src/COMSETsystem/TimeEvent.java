@@ -132,8 +132,9 @@ public class TimeEvent extends Event {
         if (simulator.probabilityTable == null) {
             simulator.probabilityTable = new ProbabilityMatrix(transitionMatrix);
         } else {
-            simulator.probabilityTable.updateMatrix(version, transitionMatrix);
+            simulator.probabilityTable.updateMatrix(transitionMatrix);
         }
+        assert(simulator.probabilityTable.Version == version);
         version++;
 
         simulator.waitingResources.removeAll(expiredEvents);

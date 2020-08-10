@@ -9,8 +9,8 @@ public class ProbabilityMatrix {
         Matrix = matrix;
     }
 
-    public void updateMatrix(int version, double[][] matrix) {
-        Version = version;
+    public void updateMatrix(double[][] matrix) {
+        Version++;
         Matrix = matrix;
     }
 }
