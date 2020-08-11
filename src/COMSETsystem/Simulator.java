@@ -172,9 +172,6 @@ public class Simulator {
 		this.probabilityTable = new ProbabilityMatrix(new double[clusterSet.size()][clusterSet.size()]);
 
 		this.clusterResourceCount = new TreeMap<>();
-		for (int i=0; i < clusterSet.size(); i++) {
-			clusterResourceCount.put(i, 0);
-		}
 
 		MapCreator creator = new MapCreator(this.mapJSONFile, this.boundingPolygonKMLFile, speedReduction);
 		System.out.println("Creating the map...");
@@ -387,8 +384,11 @@ public class Simulator {
 
 			//	create output file to record the number of available agent when an agent event is triggered
 				if (recordTime < events.peek().time) {
-					FileWriter fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv");
+					FileWriter fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv", true);
 					PrintWriter pw = new PrintWriter(fw);
+					for (int i=0; i < clusterSet.size(); i++) {
+						clusterResourceCount.put(i, 0);
+					}
 					for (ResourceEvent r : waitingResources) {
 						int key = roadToCluster.getOrDefault((int) r.pickupLoc.road.id, 0);
 						clusterResourceCount.put(key, clusterResourceCount.get(key) + 1);
