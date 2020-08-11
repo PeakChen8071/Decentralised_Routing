@@ -12,28 +12,15 @@ public class TimeEvent extends Event {
         super(time, simulator);
 
         int totalClusterSize = simulator.clusterSet.size();
-        TreeSet<ResourceEvent> resourceEvents = simulator.waitingResources;
-        TreeSet<AgentEvent> agents = simulator.emptyAgents;
-        TreeMap<Integer, Integer> clusterResourceCount = new TreeMap<>();
-        for (int i = 0; i < totalClusterSize; i++) {
-            clusterResourceCount.put(i, 0);
-        }
-        boolean firstAgent = true;
-        for (AgentEvent a : agents) {
-            for (ResourceEvent r : resourceEvents) {
-                if (firstAgent) {
-                    int key = simulator.roadToCluster.getOrDefault((int) r.pickupLoc.road.id, 0);
-                    clusterResourceCount.put(key, clusterResourceCount.get(key) + 1);
-                }
-            }
-            firstAgent = false;
-        }
+        int agentSize = simulator.emptyAgents.size();
+//        TreeSet<ResourceEvent> resources = simulator.waitingResources;
+//        TreeSet<AgentEvent> agents = simulator.emptyAgents;
 
         // Java output to "Optimiser IO" for Python solver
         File inputFile = new File("Optimiser IO/input.csv");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile))) {
-            String sb = clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
-                    agents.size() + "\n" +
+            String sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
+                    agentSize + "\n" +
                     "hashcode," + version;
             writer.write(sb);
         } catch (IOException e) {

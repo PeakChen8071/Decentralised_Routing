@@ -93,6 +93,7 @@ public class Simulator {
 	// Probability Matrix and Clusters
 	public Map<Integer, Integer> roadToCluster;
 	public HashSet<Integer> clusterSet;
+	public TreeMap<Integer, Integer> clusterResourceCount;
 	public ProbabilityMatrix probabilityTable;
 
 //	// The output file names to record the time and location of resource introduction/expiration
@@ -169,6 +170,11 @@ public class Simulator {
 			}
 		}
 		this.probabilityTable = new ProbabilityMatrix(new double[clusterSet.size()][clusterSet.size()]);
+
+		this.clusterResourceCount = new TreeMap<>();
+		for (int i=0; i < clusterSet.size(); i++) {
+			clusterResourceCount.put(i, 0);
+		}
 
 		MapCreator creator = new MapCreator(this.mapJSONFile, this.boundingPolygonKMLFile, speedReduction);
 		System.out.println("Creating the map...");
@@ -373,14 +379,25 @@ public class Simulator {
 		try (ProgressBar pb = new ProgressBar("Progress:", 100, ProgressBarStyle.ASCII)) {
 			long beginTime = events.peek().time;
 			events.add(new TimeEvent(beginTime, this));
-//			long recordTime = events.peek().time;
+			long recordTime = events.peek().time;
 
 			while (events.peek().time <= simulationEndTime) {
 				Event toTrigger = events.poll();
 				pb.stepTo((long)(((float)(toTrigger.time - beginTime)) / (simulationEndTime - beginTime) * 100.0));
 
 			//	create output file to record the number of available agent when an agent event is triggered
-//				if (recordTime < events.peek().time) {
+				if (recordTime < events.peek().time) {
+					FileWriter fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv");
+					PrintWriter pw = new PrintWriter(fw);
+					for (ResourceEvent r : waitingResources) {
+						int key = roadToCluster.getOrDefault((int) r.pickupLoc.road.id, 0);
+						clusterResourceCount.put(key, clusterResourceCount.get(key) + 1);
+					}
+					pw.write(recordTime + "," + emptyAgents.size() + ","
+							+ clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n");
+					pw.close();
+					recordTime = events.peek().time;
+
 //					fw = new FileWriter(agentLogName, true);
 //					pw = new PrintWriter(fw);
 //					StringBuilder emptyAgentLoc = new StringBuilder();
@@ -394,7 +411,7 @@ public class Simulator {
 //					pw.write(events.peek().time + "," + emptyAgentLoc + "," + waitingResourceLoc + "\n");
 //					pw.close();
 //					recordTime = events.peek().time;
-//				}
+				}
 
 				Event e = toTrigger.trigger();
 				if (e != null) {
