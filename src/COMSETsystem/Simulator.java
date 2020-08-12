@@ -27,6 +27,18 @@ import DataParsing.*;
  */
 public class Simulator {
 
+	// MODIFICATION: Probability Matrix and Clusters
+	public Map<Integer, Integer> roadToCluster;
+	public HashSet<Integer> clusterSet;
+	public TreeMap<Integer, Integer> clusterResourceCount;
+	public ProbabilityMatrix probabilityTable;
+	public int WarmUpTime;
+
+//	// The output file names to record the time and location of resource introduction/expiration
+//	public String resourceLogName = "";
+//	public String expirationLogName = "";
+//	public String meetingLogName = "";
+
 	// The map that everything will happen on.
 	public CityMap map;
 
@@ -49,12 +61,14 @@ public class Simulator {
 	// Full path to an OSM JSON map file
 	public String mapJSONFile;
 
-
 	// Full path to a TLC New York Yellow trip record file
 	public String resourceFile = null;
 
 	// Full path to a KML defining the bounding polygon to crop the map
 	public String boundingPolygonKMLFile;
+
+	// The simulation begin time is the time of first event (agent creation).
+	public long simulationBeginTime;
 
 	// The simulation end time is the expiration time of the last resource.
 	public long simulationEndTime;
@@ -89,17 +103,6 @@ public class Simulator {
 
 	// The number of assignments that have been made.
 	public long totalAssignments = 0;
-
-	// Probability Matrix and Clusters
-	public Map<Integer, Integer> roadToCluster;
-	public HashSet<Integer> clusterSet;
-	public TreeMap<Integer, Integer> clusterResourceCount;
-	public ProbabilityMatrix probabilityTable;
-
-//	// The output file names to record the time and location of resource introduction/expiration
-//	public String resourceLogName = "";
-//	public String expirationLogName = "";
-//	public String meetingLogName = "";
 
 	// A list of all the agents in the system. Not really used in COMSET, but maintained for
 	// a user's debugging purposes.
@@ -139,16 +142,7 @@ public class Simulator {
 	 */
 	public void configure(String mapJSONFile, String resourceFile, Long totalAgents, String boundingPolygonKMLFile, Long maximumLifeTime, long agentPlacementRandomSeed, double speedReduction) {
 
-		this.mapJSONFile = mapJSONFile;
-
-		this.totalAgents = totalAgents;
-
-		this.boundingPolygonKMLFile = boundingPolygonKMLFile;
-
-		this.ResourceMaximumLifeTime = maximumLifeTime;
-
-		this.resourceFile = resourceFile;
-
+		this.WarmUpTime = 3600;
 		// Read cluster file and Create an empty probability table (Version 0)
 		if (roadToCluster == null) {
 			roadToCluster = new HashMap<>();
@@ -173,6 +167,17 @@ public class Simulator {
 
 		this.clusterResourceCount = new TreeMap<>();
 
+		// Original Constructor below
+		this.mapJSONFile = mapJSONFile;
+
+		this.totalAgents = totalAgents;
+
+		this.boundingPolygonKMLFile = boundingPolygonKMLFile;
+
+		this.ResourceMaximumLifeTime = maximumLifeTime;
+
+		this.resourceFile = resourceFile;
+
 		MapCreator creator = new MapCreator(this.mapJSONFile, this.boundingPolygonKMLFile, speedReduction);
 		System.out.println("Creating the map...");
 
@@ -185,7 +190,7 @@ public class Simulator {
 		System.out.println("Pre-computing all pair travel times...");
 		map.calcTravelTimes();
 
-		// Pre-compute best weighted search route
+		// MODIFICATION: Pre-compute best weighted search route
 		System.out.println("Pre-computing best search route...");
 		map.calcSearchTimes();
 
@@ -303,9 +308,6 @@ public class Simulator {
 //		}catch(IOException ioe){
 //			ioe.printStackTrace();
 //		}
-//
-
-
 	}
 
 	/**
@@ -373,19 +375,29 @@ public class Simulator {
 //		pw3.write("time,meeting\n");
 //		pw3.close();
 
+		FileWriter fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv");
+		PrintWriter pw = new PrintWriter(fw);
+		StringBuilder sb = new StringBuilder();
+		sb.append("time,").append("totalAgentSize,");
+		for (int i=0; i<clusterSet.size(); i++) {
+			sb.append(i).append(",");
+		}
+		pw.write(sb.append("\n").toString());
+		pw.close();
+
 		try (ProgressBar pb = new ProgressBar("Progress:", 100, ProgressBarStyle.ASCII)) {
-			long beginTime = events.peek().time;
-			events.add(new TimeEvent(beginTime, this));
+			simulationBeginTime = events.peek().time;
+			events.add(new TimeEvent(simulationBeginTime, this));
 			long recordTime = events.peek().time;
 
 			while (events.peek().time <= simulationEndTime) {
 				Event toTrigger = events.poll();
-				pb.stepTo((long)(((float)(toTrigger.time - beginTime)) / (simulationEndTime - beginTime) * 100.0));
+				pb.stepTo((long)(((float)(toTrigger.time - simulationBeginTime)) / (simulationEndTime - simulationBeginTime) * 100.0));
 
 			//	create output file to record the number of available agent when an agent event is triggered
 				if (recordTime < events.peek().time) {
-					FileWriter fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv", true);
-					PrintWriter pw = new PrintWriter(fw);
+					fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv", true);
+					pw = new PrintWriter(fw);
 					for (int i=0; i < clusterSet.size(); i++) {
 						clusterResourceCount.put(i, 0);
 					}

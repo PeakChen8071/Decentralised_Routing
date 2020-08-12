@@ -87,6 +87,7 @@ public class ResourceEvent extends Event {
 		}
 		if (eventCause == BECOME_AVAILABLE) {
 			Event e = becomeAvailableHandler();
+			if (time < simulator.simulationBeginTime + simulator.WarmUpTime) return null;
 			return e;
 		} else {
 			expireHandler();

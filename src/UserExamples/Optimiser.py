@@ -9,9 +9,10 @@ def findV(ListR, TotalV):
     GAMMA2 = 0.224892
     Alpha = [0] * n
     df = pd.read_csv('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\ClusterData\\cluster_alpha (7 clusters).csv', header=None)
+    
     for i in df.index:
         Alpha[df.iloc[i, 0]] = df.iloc[i, 1]
-
+        
     def f(x):
         return -np.dot(np.multiply(Alpha, np.power(ListR, GAMMA1)), np.power(x, GAMMA2))
 
@@ -55,4 +56,3 @@ np.savetxt('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\Optimiser IO\\outp
 
 with open('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\Optimiser IO\\output_{}.csv'.format(hashCode),'a') as fd:
     fd.write('hashcode,{}'.format(hashCode))
-    
