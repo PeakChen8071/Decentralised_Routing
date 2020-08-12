@@ -20,12 +20,12 @@ public class TimeEvent extends Event {
     public TimeEvent(long time, Simulator simulator) throws IOException, InterruptedException {
         super(time, simulator);
 
-        if (time < simulator.simulationBeginTime + simulator.WarmUpTime) {
+        if (time <= simulator.simulationBeginTime + simulator.WarmUpTime) {
             // Central matching during simulation warm-up
             triggerInterval = 300;
 
-            TreeSet<AgentEvent> agents = simulator.emptyAgents;
             TreeSet<ResourceEvent> resources = simulator.waitingResources;
+            TreeSet<AgentEvent> agents = simulator.emptyAgents;
             Graph<Event, DefaultWeightedEdge> g = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
             Set<Event> agentPartition = new HashSet<>();
             Set<Event> resourcePartition = new HashSet<>();
@@ -76,24 +76,22 @@ public class TimeEvent extends Event {
                 simulator.events.remove(resource);
             }
 
-            simulator.totalAgents = agents.size();
+//            simulator.totalAgents = agents.size();
         } else {
             // Java output to "Optimiser IO" for Python solver, after warm-up
             triggerInterval = 300;
 
             int totalClusterSize = simulator.clusterSet.size();
-//            int agentSize = simulator.emptyAgents.size();
-            int agentSize = (int) simulator.totalAgents;
+            int agentSize = simulator.emptyAgents.size();
+//            int agentSize = (int) simulator.totalAgents;
+            System.out.println(agentSize);
 
             File inputFile = new File("Optimiser IO/input.csv");
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile))) {
-                String sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
-                        agentSize + "\n" +
-                        "hashcode," + version;
-                writer.write(sb);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
+            String sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
+                    agentSize + "\n" +
+                    "hashcode," + version;
+            writer.write(sb);
 
             // Run Python Optimiser and fetch output matrix as probability table
             ProcessBuilder pb = new ProcessBuilder("python", "S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\src\\UserExamples\\Optimiser.py");

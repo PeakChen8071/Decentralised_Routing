@@ -135,7 +135,11 @@ public class AgentEvent extends Event {
 		startSearchTime = time;
 		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Dropoff at " + loc, this);
 
-		if (startSearchTime >= simulator.simulationBeginTime + simulator.WarmUpTime) {
+		if (time <= simulator.simulationBeginTime + simulator.WarmUpTime) {
+			// Let agent plan a search route after the current dropoff.
+			LocationOnRoad locAgentCopy = simulator.agentCopy(loc);
+			agent.planSearchRoute(locAgentCopy, time);
+		} else {
 			// Only check the following when an agent drops off a resource.
 			// Check if there are resources waiting to be picked up by an agent.
 			if (simulator.waitingResources.size() > 0) {
@@ -199,10 +203,6 @@ public class AgentEvent extends Event {
 					Logger.getLogger(this.getClass().getName()).log(Level.INFO, "wait time = " + waitTime + " seconds.", this);
 					Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next trigger time = " + time, this);
 					return this;
-				} else {
-					// Let agent plan a search route after the current dropoff.
-					LocationOnRoad locAgentCopy = simulator.agentCopy(loc);
-					agent.planSearchRoute(locAgentCopy, time);
 				}
 			}
 		}

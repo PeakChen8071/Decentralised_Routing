@@ -531,7 +531,8 @@ public class Simulator {
 
 				sb.append("average agent search time: ").append(Math.floorDiv(totalAgentSearchTime + totalRemainTime, (totalAssignments + emptyAgents.size()))).append(" seconds \n");
 				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, totalResources)).append(" seconds \n");
-				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, totalResources)).append("%\n");
+//				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, totalResources)).append("%\n");
+				sb.append("resource expiration percentage: ").append(Math.floorDiv((totalResources - totalAssignments) * 100, totalResources)).append("%\n");
 				sb.append("\n");
 				sb.append("average agent cruise time: ").append(Math.floorDiv(totalAgentCruiseTime, totalAssignments)).append(" seconds \n");
 				sb.append("average agent approach time: ").append(Math.floorDiv(totalAgentApproachTime, totalAssignments)).append(" seconds \n");

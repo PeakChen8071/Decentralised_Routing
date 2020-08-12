@@ -2,12 +2,11 @@ package UserExamples;
 
 import COMSETsystem.*;
 import CustomDataParsing.RoadClusterParser;
-import org.apache.commons.compress.archivers.zip.ScatterZipOutputStream;
 
-import java.io.*;
-import java.util.*;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
 
 public class AgentIndependent extends BaseAgent {
 //    static double[] attract;
@@ -148,11 +147,9 @@ public class AgentIndependent extends BaseAgent {
 //        for (int i : c.nbs) {
 //            options.put(i, Math.exp(attract[i]));
 //        }
-//
 //        if (!failed) {
 //            options.put(c.id, Math.exp(attract[c.id]));
 //        }
-
 //        for (Cluster i : clusters.values()) {
 //            options.put(i.id, attract[i.id]);
 //        }
