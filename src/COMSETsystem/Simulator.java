@@ -98,11 +98,20 @@ public class Simulator {
 	// The number of resources that have been introduced to the system.
 	public long totalResources = 0;
 
+	// The number of resources that have been introduced to the system after the warm-up period.
+	public long decentralisedResources = 0;
+
 	// The number of agents that are deployed (at the beginning of the simulation).
 	public long totalAgents;
 
+	// MODIFICATION: The number of agents at the beginning of decentralised cruising
+	public int initialAgents;
+
 	// The number of assignments that have been made.
 	public long totalAssignments = 0;
+
+	// The number of assignments that have been made by centralised matching.
+	public long centralAssignments = 0;
 
 	// A list of all the agents in the system. Not really used in COMSET, but maintained for
 	// a user's debugging purposes.
@@ -388,7 +397,7 @@ public class Simulator {
 		try (ProgressBar pb = new ProgressBar("Progress:", 100, ProgressBarStyle.ASCII)) {
 			simulationBeginTime = events.peek().time;
 			events.add(new TimeEvent(simulationBeginTime, this));
-			long recordTime = events.peek().time;
+			long recordTime = simulationBeginTime + WarmUpTime - 1;
 
 			while (events.peek().time <= simulationEndTime) {
 				Event toTrigger = events.poll();
@@ -405,7 +414,7 @@ public class Simulator {
 						int key = roadToCluster.getOrDefault((int) r.pickupLoc.road.id, 0);
 						clusterResourceCount.put(key, clusterResourceCount.get(key) + 1);
 					}
-					pw.write(recordTime + "," + emptyAgents.size() + ","
+					pw.write(events.peek().time + "," + emptyAgents.size() + ","
 							+ clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n");
 					pw.close();
 					recordTime = events.peek().time;
@@ -514,7 +523,7 @@ public class Simulator {
 			System.out.println("Resource dataset file: " + resourceFile);
 			System.out.println("Bounding polygon KML file: " + boundingPolygonKMLFile);
 			System.out.println("Number of agents: " + totalAgents);
-			System.out.println("Number of resources: " + totalResources);
+			System.out.println("Number of resources: " + (decentralisedResources));
 			System.out.println("Resource Maximum Life Time: " + ResourceMaximumLifeTime + " seconds");
 			System.out.println("Agent class: " + agentClass.getName());
 
@@ -529,15 +538,15 @@ public class Simulator {
 					totalRemainTime += (simulationEndTime - ae.startSearchTime);
 				}
 
-				sb.append("average agent search time: ").append(Math.floorDiv(totalAgentSearchTime + totalRemainTime, (totalAssignments + emptyAgents.size()))).append(" seconds \n");
-				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, totalResources)).append(" seconds \n");
-//				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, totalResources)).append("%\n");
-				sb.append("resource expiration percentage: ").append(Math.floorDiv((totalResources - totalAssignments) * 100, totalResources)).append("%\n");
+				sb.append("total number of decentralised assignments: ").append(totalAssignments).append("\n");
+				sb.append("number of expiration: ").append(expiredResources).append("\n");
+				sb.append("average agent search time: ").append(Math.floorDiv(totalAgentSearchTime + totalRemainTime, totalAgents)).append(" seconds \n");
+				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, decentralisedResources)).append(" seconds \n");
+				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, decentralisedResources)).append("%\n");
 				sb.append("\n");
 				sb.append("average agent cruise time: ").append(Math.floorDiv(totalAgentCruiseTime, totalAssignments)).append(" seconds \n");
 				sb.append("average agent approach time: ").append(Math.floorDiv(totalAgentApproachTime, totalAssignments)).append(" seconds \n");
 				sb.append("average resource trip time: ").append(Math.floorDiv(totalResourceTripTime, totalAssignments)).append(" seconds \n");
-				sb.append("total number of assignments: ").append(totalAssignments).append("\n");
 			} else {
 				sb.append("No resources.\n");
 			}

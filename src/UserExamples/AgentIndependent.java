@@ -15,6 +15,7 @@ public class AgentIndependent extends BaseAgent {
     static RoadClusterParser rcp;
     static Map<Integer, Cluster> clusters;
     static ClusterTool ct;
+    static int probabilityVersion;
 
 //    boolean failed = false; // flag value indicating if the last agent search failed
 //    boolean start = true;
@@ -62,6 +63,8 @@ public class AgentIndependent extends BaseAgent {
         if (ct == null) {
             ct = new ClusterTool(map, clusters, choiceModel);
         }
+
+        probabilityVersion = map.simulator.probabilityTable.Version;
 
 //        if (attract == null) {
 //            attract = new double[totalClusterNumber];
@@ -282,6 +285,18 @@ public class AgentIndependent extends BaseAgent {
             planSearchRoute(currentLocation, currentTime);
             return route.poll();
         }
+
+//        // Replan according to the new probability table
+//        if ((route.size() != 0) && (probabilityVersion == map.simulator.probabilityTable.Version)) {
+//            // Route is not empty, take the next intersection.
+//            Intersection nextIntersection = route.poll();
+//            return nextIntersection;
+//        } else {
+//            // Finished the planned route. Plan a new route.
+//            route.clear();
+//            planSearchRoute(currentLocation, currentTime);
+//            return route.poll();
+//        }
     }
 
     @Override

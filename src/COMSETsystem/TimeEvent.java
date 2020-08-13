@@ -20,9 +20,9 @@ public class TimeEvent extends Event {
     public TimeEvent(long time, Simulator simulator) throws IOException, InterruptedException {
         super(time, simulator);
 
-        if (time <= simulator.simulationBeginTime + simulator.WarmUpTime) {
+        if (time < simulator.simulationBeginTime + simulator.WarmUpTime) {
             // Central matching during simulation warm-up
-            triggerInterval = 300;
+            triggerInterval = 10;
 
             TreeSet<ResourceEvent> resources = simulator.waitingResources;
             TreeSet<AgentEvent> agents = simulator.emptyAgents;
@@ -33,7 +33,7 @@ public class TimeEvent extends Event {
             for (AgentEvent a: agents) {
                 for (ResourceEvent r : resources) {
                     if (time > r.expirationTime) {
-                        if (!expiredEvents.contains(r)) {
+                        if (!expiredEvents.contains(r) && (r.eventCause == 0)) {
 //                        //record expiration of resources
 //                        FileWriter fw1 = new FileWriter(simulator.expirationLogName, true);
 //                        PrintWriter pw1 = new PrintWriter(fw1);
@@ -41,8 +41,8 @@ public class TimeEvent extends Event {
 //                        pw1.close();
 
                             expiredEvents.add(r);
-                            simulator.expiredResources++;
-                            simulator.totalResourceWaitTime += simulator.ResourceMaximumLifeTime;
+//                            simulator.expiredResources++;
+//                            simulator.totalResourceWaitTime += simulator.ResourceMaximumLifeTime;
                         }
                         continue;
                     }
@@ -76,14 +76,14 @@ public class TimeEvent extends Event {
                 simulator.events.remove(resource);
             }
 
-//            simulator.totalAgents = agents.size();
+            simulator.initialAgents = agents.size();
         } else {
             // Java output to "Optimiser IO" for Python solver, after warm-up
             triggerInterval = 300;
 
             int totalClusterSize = simulator.clusterSet.size();
             int agentSize = simulator.emptyAgents.size();
-//            int agentSize = (int) simulator.totalAgents;
+//            int agentSize = simulator.initialAgents;
             System.out.println(agentSize);
 
             File inputFile = new File("Optimiser IO/input.csv");
@@ -166,12 +166,12 @@ public class TimeEvent extends Event {
         long searchTime = cruiseTime + approachTime;
         long waitTime = time + approachTime - r.availableTime;
 
-        simulator.totalAgentCruiseTime += cruiseTime;
-        simulator.totalAgentApproachTime += approachTime;
-        simulator.totalAgentSearchTime += searchTime;
-        simulator.totalResourceWaitTime += waitTime;
-        simulator.totalResourceTripTime += r.tripTime;
-        simulator.totalAssignments++;
+//        simulator.totalAgentCruiseTime += cruiseTime;
+//        simulator.totalAgentApproachTime += approachTime;
+//        simulator.totalAgentSearchTime += searchTime;
+//        simulator.totalResourceWaitTime += waitTime;
+//        simulator.totalResourceTripTime += r.tripTime;
+        simulator.centralAssignments++;
 
         // Inform the assignment to the agent.
         a.assignedTo(agentLocationOnRoad, time, id, r.pickupLoc, r.dropoffLoc);

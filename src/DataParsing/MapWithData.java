@@ -93,16 +93,15 @@ public class MapWithData {
 				if (resource.getTime() < earliestResourceTime) {
 					earliestResourceTime = resource.getTime();
 				}
-				if (resource.getTime() + simulator.ResourceMaximumLifeTime + ev.tripTime > latestResourceTime) {
-					latestResourceTime = resource.getTime() + simulator.ResourceMaximumLifeTime + ev.tripTime;
+//				if (resource.getTime() + simulator.ResourceMaximumLifeTime + ev.tripTime > latestResourceTime) {
+//					latestResourceTime = resource.getTime() + simulator.ResourceMaximumLifeTime + ev.tripTime;
+//				}
+
+				// MODIFICATION: simulation ends with the last resource spawn
+				if (resource.getTime() > latestResourceTime) {
+					latestResourceTime = resource.getTime();
 				}
 			}
-			//modified
-//			for (Long roadId:pickupCount.keySet()){
-//				writer.println(roadId+","+pickupCount.get(roadId));
-//			}
-//            writer.close();
-			//
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
