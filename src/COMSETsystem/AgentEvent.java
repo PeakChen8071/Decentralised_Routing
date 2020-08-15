@@ -170,7 +170,7 @@ public class AgentEvent extends Event {
 
 			// if a a waiting resource is reachable in time by this agent make an assignment
 			if (bestResource != null) {
-				if (startSearchTime >= simulator.simulationBeginTime + simulator.WarmUpTime) {
+				if (bestResource.availableTime >= simulator.simulationBeginTime + simulator.WarmUpTime) {
 					// update the statistics
 					long cruiseTime = time - startSearchTime;
 					long approachTime = earliest - time;

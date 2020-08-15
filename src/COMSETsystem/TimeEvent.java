@@ -29,23 +29,8 @@ public class TimeEvent extends Event {
             Graph<Event, DefaultWeightedEdge> g = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
             Set<Event> agentPartition = new HashSet<>();
             Set<Event> resourcePartition = new HashSet<>();
-            HashSet<ResourceEvent> expiredEvents = new HashSet<>();
             for (AgentEvent a: agents) {
                 for (ResourceEvent r : resources) {
-                    if (time > r.expirationTime) {
-                        if (!expiredEvents.contains(r) && (r.eventCause == 0)) {
-//                        //record expiration of resources
-//                        FileWriter fw1 = new FileWriter(simulator.expirationLogName, true);
-//                        PrintWriter pw1 = new PrintWriter(fw1);
-//                        pw1.write( r.expirationTime + "," + r.pickupLoc.road.id + "\n");
-//                        pw1.close();
-
-                            expiredEvents.add(r);
-//                            simulator.expiredResources++;
-//                            simulator.totalResourceWaitTime += simulator.ResourceMaximumLifeTime;
-                        }
-                        continue;
-                    }
                     long eta = getApproachTime(a, r);
                     if (eta < simulator.ResourceMaximumLifeTime) {
                         DefaultWeightedEdge e = new DefaultWeightedEdge();
@@ -62,7 +47,7 @@ public class TimeEvent extends Event {
                     }
                 }
             }
-            simulator.waitingResources.removeAll(expiredEvents);
+//            simulator.waitingResources.removeAll(expiredEvents);
             //        System.out.println("Number of agent"+agents.size());
             //        System.out.println("Number of resources"+resourceEvents.size());
             MaximumWeightBipartiteMatching matchObject = new MaximumWeightBipartiteMatching(g, agentPartition, resourcePartition);
@@ -73,7 +58,6 @@ public class TimeEvent extends Event {
                 AgentEvent agent = (AgentEvent) g.getEdgeSource(e);
                 ResourceEvent resource = (ResourceEvent) g.getEdgeTarget(e);
                 AssignAgentToResource(agent, resource);
-                simulator.events.remove(resource);
             }
 
             simulator.initialAgents = agents.size();
@@ -84,7 +68,7 @@ public class TimeEvent extends Event {
             int totalClusterSize = simulator.clusterSet.size();
             int agentSize = simulator.emptyAgents.size();
 //            int agentSize = simulator.initialAgents;
-            System.out.println(agentSize);
+//            System.out.println(agentSize);
 
             File inputFile = new File("Optimiser IO/input.csv");
             BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
@@ -92,6 +76,7 @@ public class TimeEvent extends Event {
                     agentSize + "\n" +
                     "hashcode," + version;
             writer.write(sb);
+            writer.close();
 
             // Run Python Optimiser and fetch output matrix as probability table
             ProcessBuilder pb = new ProcessBuilder("python", "S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\src\\UserExamples\\Optimiser.py");
@@ -160,11 +145,11 @@ public class TimeEvent extends Event {
         long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;
         LocationOnRoad agentLocationOnRoad = new LocationOnRoad(a.loc.road, travelTimeFromStartIntersection);
 
-        long cruiseTime = time - a.startSearchTime;
-        long approachTime = getApproachTime(a, r);
-
-        long searchTime = cruiseTime + approachTime;
-        long waitTime = time + approachTime - r.availableTime;
+//        long cruiseTime = time - a.startSearchTime;
+//        long approachTime = getApproachTime(a, r);
+//
+//        long searchTime = cruiseTime + approachTime;
+//        long waitTime = time + approachTime - r.availableTime;
 
 //        simulator.totalAgentCruiseTime += cruiseTime;
 //        simulator.totalAgentApproachTime += approachTime;
@@ -180,18 +165,19 @@ public class TimeEvent extends Event {
         simulator.emptyAgents.remove(a);
         simulator.events.remove(a);
         simulator.waitingResources.remove(r);
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Assigned to agent id = " + a.id + " currently at " + a.loc, this);
+        simulator.events.remove(r);
+//        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Assigned to agent id = " + a.id + " currently at " + a.loc, this);
 
         a.setEvent(getApproachTime(a, r) + r.time + r.tripTime, r.dropoffLoc, AgentEvent.DROPPING_OFF);
         simulator.events.add(a);
 
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "From agent to resource = " + approachTime + " seconds.", this);
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "From pickupLoc to dropoffLoc = " + r.tripTime + " seconds.", this);
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "cruise time = " + cruiseTime + " seconds.", this);
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "approach time = " + approachTime + " seconds.", this);
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "search time = " + searchTime + " seconds.", this);
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "wait time = " + waitTime + " seconds.", this);
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next agent trigger time = " + a.time, this);
+//        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "From agent to resource = " + approachTime + " seconds.", this);
+//        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "From pickupLoc to dropoffLoc = " + r.tripTime + " seconds.", this);
+//        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "cruise time = " + cruiseTime + " seconds.", this);
+//        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "approach time = " + approachTime + " seconds.", this);
+//        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "search time = " + searchTime + " seconds.", this);
+//        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "wait time = " + waitTime + " seconds.", this);
+//        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next agent trigger time = " + a.time, this);
     }
 
     @Override

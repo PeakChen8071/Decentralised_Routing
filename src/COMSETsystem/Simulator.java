@@ -400,20 +400,16 @@ public class Simulator {
 			long recordTime = simulationBeginTime + WarmUpTime - 1;
 
 			while (events.peek().time <= simulationEndTime) {
-				Event toTrigger = events.poll();
-				pb.stepTo((long)(((float)(toTrigger.time - simulationBeginTime)) / (simulationEndTime - simulationBeginTime) * 100.0));
 
-			//	create output file to record the number of available agent when an agent event is triggered
+				for (int i=0; i < clusterSet.size(); i++) { clusterResourceCount.put(i, 0); }
+				for (ResourceEvent r : waitingResources) {
+					int key = roadToCluster.getOrDefault((int) r.pickupLoc.road.id, 0);
+					clusterResourceCount.put(key, clusterResourceCount.get(key) + 1);
+				}
+
 				if (recordTime < events.peek().time) {
 					fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv", true);
 					pw = new PrintWriter(fw);
-					for (int i=0; i < clusterSet.size(); i++) {
-						clusterResourceCount.put(i, 0);
-					}
-					for (ResourceEvent r : waitingResources) {
-						int key = roadToCluster.getOrDefault((int) r.pickupLoc.road.id, 0);
-						clusterResourceCount.put(key, clusterResourceCount.get(key) + 1);
-					}
 					pw.write(events.peek().time + "," + emptyAgents.size() + ","
 							+ clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n");
 					pw.close();
@@ -433,6 +429,9 @@ public class Simulator {
 //					pw.close();
 //					recordTime = events.peek().time;
 				}
+
+				Event toTrigger = events.poll();
+				pb.stepTo((long)(((float)(toTrigger.time - simulationBeginTime)) / (simulationEndTime - simulationBeginTime) * 100.0));
 
 				Event e = toTrigger.trigger();
 				if (e != null) {
@@ -539,10 +538,9 @@ public class Simulator {
 				}
 
 				sb.append("total number of decentralised assignments: ").append(totalAssignments).append("\n");
-				sb.append("number of expiration: ").append(expiredResources).append("\n");
+				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, decentralisedResources)).append("%\n");
 				sb.append("average agent search time: ").append(Math.floorDiv(totalAgentSearchTime + totalRemainTime, totalAgents)).append(" seconds \n");
 				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, decentralisedResources)).append(" seconds \n");
-				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, decentralisedResources)).append("%\n");
 				sb.append("\n");
 				sb.append("average agent cruise time: ").append(Math.floorDiv(totalAgentCruiseTime, totalAssignments)).append(" seconds \n");
 				sb.append("average agent approach time: ").append(Math.floorDiv(totalAgentApproachTime, totalAssignments)).append(" seconds \n");

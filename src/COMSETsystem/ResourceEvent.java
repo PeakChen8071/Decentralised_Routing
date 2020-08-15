@@ -199,7 +199,7 @@ public class ResourceEvent extends Event {
 	 * Handler of an EXPIRED event.
 	 */
 	public void expireHandler() {
-		if (time >= simulator.simulationBeginTime + simulator.WarmUpTime) {
+		if (expirationTime >= simulator.simulationBeginTime + simulator.WarmUpTime) {
 			simulator.expiredResources++;
 			simulator.totalResourceWaitTime += simulator.ResourceMaximumLifeTime;
 		}

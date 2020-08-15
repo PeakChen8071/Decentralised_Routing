@@ -5,11 +5,10 @@ import pandas as pd
 
 def findV(ListR, TotalV):
     n = len(ListR)
-    GAMMA1 = 0.304938
-    GAMMA2 = 0.224892
+    # GAMMA1 = 0.304938; GAMMA2 = 0.224892
+    GAMMA1 = 0.227927; GAMMA2 = 0.233829
     Alpha = [0] * n
-    df = pd.read_csv('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\ClusterData\\cluster_alpha (7 clusters).csv', header=None)
-    
+    df = pd.read_csv('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\ClusterData\\cluster_alpha (23 clusters).csv', header=None)
     for i in df.index:
         Alpha[df.iloc[i, 0]] = df.iloc[i, 1]
         
@@ -30,7 +29,15 @@ def findV(ListR, TotalV):
 
 def findM(eigenVector):
     n = len(eigenVector)
-
+    ub = []
+    df = pd.read_csv('S:/USYD/Research/Decentralised Cruising/Taxi/ClusterData/cluster_min=70_max=10000_alpha=-0.001_nb.csv', index_col='cluster_id')
+    for i in df.index.sort_values():
+        adjacency = [0] * n
+        for j in df.loc[i].str.split()[0]:
+            adjacency[i] = 1
+            adjacency[int(j)] = 1
+        ub += adjacency
+    
     def f(x):
         return np.linalg.norm(x.reshape(n, n).dot(eigenVector) - eigenVector)
 
@@ -39,7 +46,7 @@ def findM(eigenVector):
 
     x0 = [1 / n] * n * n
 
-    bounds = scipy.optimize.Bounds([0] * n * n, [1] * n * n)
+    bounds = scipy.optimize.Bounds([0]*n*n, ub)
 
     res = scipy.optimize.minimize(f, x0, method='SLSQP', constraints=[eq_cons],
                                   options={'ftol': 1e-9, 'maxiter': 100 * len(x0)}, bounds=bounds)
