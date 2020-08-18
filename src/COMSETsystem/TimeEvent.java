@@ -104,7 +104,7 @@ public class TimeEvent extends Event {
             }
             simulator.probabilityTable.updateMatrix(transitionMatrix);
 
-            assert (simulator.probabilityTable.Version == version);
+            assert simulator.probabilityTable.Version == version : "version mismatch";
             version++;
         }
     }

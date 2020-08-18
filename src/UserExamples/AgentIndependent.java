@@ -156,16 +156,24 @@ public class AgentIndependent extends BaseAgent {
 //        int target = choiceModel.choiceByProbability(options);
 
 //        int target = choiceModel.getRandomFromSet(clusters.keySet()); // randomly choose a cluster
-        int target;
-        if (map.simulator.probabilityTable.Version == 0) {
-            target = choiceModel.getRandomFromSet(clusters.keySet());
-        } else {
-            HashMap<Integer, Double> options = new HashMap<>();
-            for (int i = 0; i < clusters.size(); i++) {
-                options.put(i, map.simulator.probabilityTable.Matrix[i][c.id]);
-            }
-            target = choiceModel.choiceByProbability(options);
+//        int target;
+//        if (map.simulator.probabilityTable.Version == 0) {
+//            target = choiceModel.getRandomFromSet(clusters.keySet());
+//        } else {
+//            System.out.println("table is used");
+//            HashMap<Integer, Double> options = new HashMap<>();
+//            for (int i = 0; i < clusters.size(); i++) {
+//                options.put(i, map.simulator.probabilityTable.Matrix[i][c.id]);
+//            }
+//            target = choiceModel.choiceByProbability(options);
+//        }
+//        Cluster dest = clusters.get(target);
+
+        HashMap<Integer, Double> options = new HashMap<>();
+        for (int i = 0; i < clusters.size(); i++) {
+            options.put(i, map.simulator.probabilityTable.Matrix[i][c.id]);
         }
+        int target = choiceModel.choiceByProbability(options);
         Cluster dest = clusters.get(target);
 
 //        // can manually overwrite the destination cluster here.
