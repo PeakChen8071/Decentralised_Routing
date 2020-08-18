@@ -66,8 +66,8 @@ public class TimeEvent extends Event {
             triggerInterval = 300;
 
             int totalClusterSize = simulator.clusterSet.size();
-            int agentSize = simulator.emptyAgents.size();
-//            int agentSize = simulator.initialAgents;
+//            int agentSize = simulator.emptyAgents.size();
+            int agentSize = simulator.initialAgents;
 //            System.out.println(agentSize);
 
             File inputFile = new File("Optimiser IO/input.csv");

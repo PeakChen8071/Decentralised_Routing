@@ -24,7 +24,7 @@ def findV(ListR, TotalV):
 
     res = scipy.optimize.minimize(f, x0, method='SLSQP', constraints=[eq_cons],
                                   options={'ftol': 1e-9, 'maxiter': 100 * len(x0)}, bounds=bounds)
-    return res.x / TotalV
+    return res.x
 
 
 def findM(eigenVector):
