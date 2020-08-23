@@ -3,12 +3,12 @@ import scipy.optimize
 import pandas as pd
 
 
-def findV(ListR, TotalV):
+def findV(ListR, TotalV, hashCode):
     n = len(ListR)
-    # GAMMA1 = 0.304938; GAMMA2 = 0.224892
+    #GAMMA1 = 0.304938; GAMMA2 = 0.224892
     GAMMA1 = 0.227927; GAMMA2 = 0.233829
     Alpha = [0] * n
-    df = pd.read_csv('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\ClusterData\\cluster_alpha (23 clusters).csv', header=None)
+    df = pd.read_csv('S:/USYD/Research/Decentralised Cruising/Taxi/ClusterData/cluster_alpha (23 clusters).csv', header=None)
     for i in df.index:
         Alpha[df.iloc[i, 0]] = df.iloc[i, 1]
         
@@ -24,6 +24,12 @@ def findV(ListR, TotalV):
 
     res = scipy.optimize.minimize(f, x0, method='SLSQP', constraints=[eq_cons],
                                   options={'ftol': 1e-9, 'maxiter': 100 * len(x0)}, bounds=bounds)
+
+
+    historicalR = pd.read_csv('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/historical_R.csv', header=None, usecols=[hashCode+1], squeeze=True).values
+    newR = ListR + historicalR - np.multiply(np.multiply(Alpha, np.power(ListR, GAMMA1)), np.power(res.x, GAMMA2))
+    newR[newR < 0] = 0
+    np.savetxt('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/input.csv', newR.reshape(1, newR.shape[0]), fmt='%.9f', delimiter=',')
     return res.x
 
 
@@ -54,13 +60,13 @@ def findM(eigenVector):
     return res.x
 
 
-javaDf = pd.read_csv('S:\\USYD\Research\\Decentralised Cruising\\Taxi\\Optimiser IO\\input.csv', header=None)
-R = javaDf.iloc[0, :].astype(int).tolist()
+javaDf = pd.read_csv('S:/USYD\Research/Decentralised Cruising/Taxi/Optimiser IO/input.csv', header=None)
+R = javaDf.iloc[0, :].astype(float).tolist()
 V = int(javaDf.iloc[1, 0])
 hashCode = int(javaDf.iloc[2, 1])
     
-np.savetxt('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\Optimiser IO\\output_{}.csv'.format(hashCode),
-            findM(findV(R, V)).reshape(len(R), len(R)), delimiter=',')
+np.savetxt('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/output_{}.csv'.format(hashCode),
+            findM(findV(R, V, hashCode)).reshape(len(R), len(R)), fmt='%.9f', delimiter=',')
 
-with open('S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\Optimiser IO\\output_{}.csv'.format(hashCode),'a') as fd:
+with open('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/output_{}.csv'.format(hashCode),'a') as fd:
     fd.write('hashcode,{}'.format(hashCode))

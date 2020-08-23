@@ -66,15 +66,23 @@ public class TimeEvent extends Event {
             triggerInterval = 300;
 
             int totalClusterSize = simulator.clusterSet.size();
-//            int agentSize = simulator.emptyAgents.size();
-            int agentSize = simulator.initialAgents;
+            int agentSize = simulator.emptyAgents.size();
+//            int agentSize = simulator.initialAgents; // This could be zero and becomes neighbouring random
 //            System.out.println(agentSize);
 
-            File inputFile = new File("Optimiser IO/input.csv");
-            BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
-            String sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
+            FileWriter fw = new FileWriter(new File("Optimiser IO/input.csv"), true);
+            BufferedWriter writer = new BufferedWriter(fw);
+//            String sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
+//                    agentSize + "\n" +
+//                    "hashcode," + version;
+            String sb;
+            if (version == 0) {
+                sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
                     agentSize + "\n" +
                     "hashcode," + version;
+            } else {
+                sb = "\n" + agentSize + "\n" + "hashcode," + version;
+            }
             writer.write(sb);
             writer.close();
 

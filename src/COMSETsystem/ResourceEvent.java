@@ -100,7 +100,7 @@ public class ResourceEvent extends Event {
 	public Event becomeAvailableHandler() throws IOException {
 		//total number of resources from dataset appearing through the simulation increases
 		++simulator.totalResources;
-		if (availableTime >= simulator.simulationBeginTime + simulator.WarmUpTime) ++simulator.decentralisedResources;
+		if (time >= simulator.simulationBeginTime + simulator.WarmUpTime) ++simulator.decentralisedResources;
 
 //		String resourceLogName = simulator.resourceLogName;
 //		FileWriter fw1 = new FileWriter(resourceLogName, true);
@@ -150,7 +150,7 @@ public class ResourceEvent extends Event {
 			return this;
 
 		} else {
-			if (availableTime >= simulator.simulationBeginTime + simulator.WarmUpTime) {
+			if (time >= simulator.simulationBeginTime + simulator.WarmUpTime) {
 				// make assignment and update statistics
 				long cruiseTime = time - bestAgent.startSearchTime;
 				long approachTime = earliest - time;
@@ -199,7 +199,7 @@ public class ResourceEvent extends Event {
 	 * Handler of an EXPIRED event.
 	 */
 	public void expireHandler() {
-		if (expirationTime >= simulator.simulationBeginTime + simulator.WarmUpTime) {
+		if (time >= simulator.simulationBeginTime + simulator.WarmUpTime) {
 			simulator.expiredResources++;
 			simulator.totalResourceWaitTime += simulator.ResourceMaximumLifeTime;
 		}

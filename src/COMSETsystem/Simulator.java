@@ -172,7 +172,7 @@ public class Simulator {
 				ioe.printStackTrace();
 			}
 		}
-		this.probabilityTable = new ProbabilityMatrix(new double[clusterSet.size()][clusterSet.size()]);
+		this.probabilityTable = new ProbabilityMatrix(clusterSet.size());
 
 		this.clusterResourceCount = new TreeMap<>();
 
@@ -522,7 +522,7 @@ public class Simulator {
 			System.out.println("Resource dataset file: " + resourceFile);
 			System.out.println("Bounding polygon KML file: " + boundingPolygonKMLFile);
 			System.out.println("Number of agents: " + totalAgents);
-			System.out.println("Number of resources: " + (decentralisedResources));
+			System.out.println("Number of resources: " + decentralisedResources);
 			System.out.println("Resource Maximum Life Time: " + ResourceMaximumLifeTime + " seconds");
 			System.out.println("Agent class: " + agentClass.getName());
 
@@ -537,8 +537,9 @@ public class Simulator {
 					totalRemainTime += (simulationEndTime - ae.startSearchTime);
 				}
 
-				sb.append("total number of decentralised assignments: ").append(totalAssignments).append("\n");
-				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, decentralisedResources)).append("%\n");
+				sb.append("total number of assignments: ").append(totalAssignments).append("\n");
+//				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, decentralisedResources)).append("%\n");
+				sb.append("resource expiration percentage: ").append(Math.floorDiv((decentralisedResources - totalAssignments) * 100, decentralisedResources)).append("%\n");
 				sb.append("average agent search time: ").append(Math.floorDiv(totalAgentSearchTime + totalRemainTime, totalAgents)).append(" seconds \n");
 				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, decentralisedResources)).append(" seconds \n");
 				sb.append("\n");

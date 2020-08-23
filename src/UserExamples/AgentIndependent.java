@@ -105,6 +105,8 @@ public class AgentIndependent extends BaseAgent {
     public void planSearchRoute(LocationOnRoad currentLocation, long currentTime) {
 
         Cluster c = ct.getClusterFromRoad(currentLocation.road);
+        HashMap<Integer, Double> options = new HashMap<>();
+
 //        if(id % 10000 == 0){
 //            System.out.println("Replan");
 //            System.out.println(Arrays.toString(replan_count));
@@ -142,42 +144,25 @@ public class AgentIndependent extends BaseAgent {
 //            }
 //        }
 
-        // Logistic Choice Model
-//        HashMap<Integer, Double> options = new HashMap<>();
+//        // Logit Neighbouring Search
 //        for (int i : c.nbs) {
-//            options.put(i, Math.exp(attract[i]));
+//            options.put(i, Math.exp(clusters.get(i).attr));
 //        }
-//        if (!failed) {
-//            options.put(c.id, Math.exp(attract[c.id]));
-//        }
+//        options.put(c.id, Math.exp(c.attr));
+
+//        // Logit Global Search
 //        for (Cluster i : clusters.values()) {
-//            options.put(i.id, attract[i.id]);
+//            options.put(i.id, i.attr);
 //        }
-//        int target = choiceModel.choiceByProbability(options);
 
-//        int target = choiceModel.getRandomFromSet(clusters.keySet()); // randomly choose a cluster
-//        int target;
-//        if (map.simulator.probabilityTable.Version == 0) {
-//            target = choiceModel.getRandomFromSet(clusters.keySet());
-//        } else {
-//            System.out.println("table is used");
-//            HashMap<Integer, Double> options = new HashMap<>();
-//            for (int i = 0; i < clusters.size(); i++) {
-//                options.put(i, map.simulator.probabilityTable.Matrix[i][c.id]);
-//            }
-//            target = choiceModel.choiceByProbability(options);
-//        }
-//        Cluster dest = clusters.get(target);
-
-        HashMap<Integer, Double> options = new HashMap<>();
+        // Make destination choice based on probability tables from the meeting function optimisation
         for (int i = 0; i < clusters.size(); i++) {
-            options.put(i, map.simulator.probabilityTable.Matrix[i][c.id]);
+            if (map.simulator.probabilityTable.Matrix[i][c.id] > 0) { // Consider non-zero probabilities
+                options.put(i, map.simulator.probabilityTable.Matrix[i][c.id]);
+            }
         }
         int target = choiceModel.choiceByProbability(options);
         Cluster dest = clusters.get(target);
-
-//        // can manually overwrite the destination cluster here.
-//        dest = clusters.get(3);
 
         // randomly select a road in the destination cluster as the destination road
         HashSet<Road> roads = dest.roads;
