@@ -12,7 +12,7 @@ import java.util.logging.Logger;
  */
 /**
  * The AgentEvent class represents a moment an agent is going to perform an
- * action in the simmulation, such as becoming empty and picking up a
+ * action in the simulation, such as becoming empty and picking up a
  * resource, or driving to some other Intersection. 
  * 
  * An AgentEvent is triggered in either of the following cases:
@@ -88,8 +88,8 @@ public class AgentEvent extends Event {
 
 	@Override
 	Event trigger() throws Exception {
-		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "******** AgentEvent id = " + id+ " triggered at time " + time, this);
-		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Loc = " + loc, this);
+//		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "******** AgentEvent id = " + id+ " triggered at time " + time, this);
+//		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Loc = " + loc, this);
 		Event e;
 		if (eventCause == DROPPING_OFF) {
 			e = dropoffHandler();
@@ -106,62 +106,17 @@ public class AgentEvent extends Event {
 	Event intersectionReachedHandler() throws Exception{
 		assert loc.travelTimeFromStartIntersection == loc.road.travelTime : "Agent not at an intersection.";
 
-		// Ask the agent to choose the next intersection to move to.
-		LocationOnRoad locAgentCopy = simulator.agentCopy(loc);
-		Intersection nextIntersection = agent.nextIntersection(locAgentCopy, time);
-		if (nextIntersection == null) {
-			throw new Exception("agent.move() did not return a next location");
-		}
-		if (!loc.road.to.isAdjacent(nextIntersection)) {
-			throw new Exception("move not made to an adjacent location");
-		}
-
-		// set location and time of the next trigger
-		Road nextRoad = loc.road.to.roadTo(nextIntersection);
-		LocationOnRoad nextLocation = new LocationOnRoad(nextRoad, nextRoad.travelTime);
-		setEvent(time + nextRoad.travelTime, nextLocation, INTERSECTION_REACHED);
-		
-		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Move to " + nextRoad.to, this);
-		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next trigger time = " + time, this);
-
-		return this;
-	}
-
-	/*
-	 * The handler of a DROPPING_OFF event.
-	 */
-	Event dropoffHandler() throws IOException {
-		startSearchTime = time;
-		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Dropoff at " + loc, this);
-
-//		if (time < simulator.simulationBeginTime + simulator.WarmUpTime) {
-//			// Let agent plan a search route after the current dropoff.
-//			LocationOnRoad locAgentCopy = simulator.agentCopy(loc);
-//			agent.planSearchRoute(locAgentCopy, time);
-//		} else {
-
-		// Only check the following when an agent drops off a resource.
-		// Check if there are resources waiting to be picked up by an agent.
 		if (simulator.waitingResources.size() > 0) {
 			// get the closest resource that will not expire before the agent reaches it
 			ResourceEvent bestResource = null;
 			long earliest = Long.MAX_VALUE;
 			for (ResourceEvent res : simulator.waitingResources) {
 				// If res is in waitingResources, then it must have not expired yet
-				// testing null pointer exception
-				long travelTime = Long.MAX_VALUE;
-				if (loc == null) {
-					System.out.println("loc is null");
-				} else if (res.pickupLoc == null) {
-					System.out.println("res.loc is null");
-				} else {
-					travelTime = simulator.map.travelTimeBetween(loc, res.pickupLoc);
-				}
-
-				if (travelTime <= 40) {
+				long travelTime = simulator.map.travelTimeBetween(loc, res.pickupLoc);
+				if (travelTime <= 20) {
 					// if the resource is reachable before expiration
 					long arriveTime = time + travelTime;
-					if (arriveTime + simulator.ResourceMaximumLifeTime <= res.expirationTime && arriveTime < earliest) {
+					if (arriveTime <= res.expirationTime && arriveTime < earliest) {
 						earliest = arriveTime;
 						bestResource = res;
 					}
@@ -183,7 +138,112 @@ public class AgentEvent extends Event {
 					simulator.totalResourceWaitTime += waitTime;
 					simulator.totalResourceTripTime += bestResource.tripTime;
 					simulator.totalAssignments++;
+
+					FileWriter fw2 = new FileWriter("Resource and Expiration Results/resourceWaitingTime.csv", true);
+					PrintWriter pw2 = new PrintWriter(fw2);
+					pw2.write(waitTime + "\n");
+					pw2.close();
 				}
+
+//				// keep a record of meetings
+//				String meetingLogName = simulator.meetingLogName;
+//				FileWriter fw3 = new FileWriter(meetingLogName, true);
+//				PrintWriter pw3 = new PrintWriter(fw3);
+//				pw3.write(time + "," + bestResource.pickupLoc.road.id + "\n");
+//				pw3.close();
+
+				// Inform the assignment to the agent.
+				assignedTo(loc, time, bestResource.id, bestResource.pickupLoc, bestResource.dropoffLoc);
+
+				// "Label" the agent as occupied
+				simulator.emptyAgents.remove(this);
+
+				simulator.waitingResources.remove(bestResource);
+				simulator.events.remove(bestResource); // resource is pickup and does not expire anymore.
+
+				// set time and location of the next trigger
+				setEvent(earliest + bestResource.tripTime, bestResource.dropoffLoc, DROPPING_OFF);
+
+				return this;
+			}
+		}
+
+		// Ask the agent to choose the next intersection to move to, if not yet assigned
+		LocationOnRoad locAgentCopy = simulator.agentCopy(loc);
+		Intersection nextIntersection = agent.nextIntersection(locAgentCopy, time);
+		if (nextIntersection == null) {
+			throw new Exception("agent.move() did not return a next location");
+		}
+		if (!loc.road.to.isAdjacent(nextIntersection)) {
+			throw new Exception("move not made to an adjacent location");
+		}
+
+		// set location and time of the next trigger
+		Road nextRoad = loc.road.to.roadTo(nextIntersection);
+		LocationOnRoad nextLocation = new LocationOnRoad(nextRoad, nextRoad.travelTime);
+		setEvent(time + nextRoad.travelTime, nextLocation, INTERSECTION_REACHED);
+
+//		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Move to " + nextRoad.to, this);
+//		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next trigger time = " + time, this);
+
+		return this;
+	}
+
+	/*
+	 * The handler of a DROPPING_OFF event.
+	 */
+	Event dropoffHandler() throws IOException {
+		startSearchTime = time;
+//		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Dropoff at " + loc, this);
+
+		// Only check the following when an agent drops off a resource.
+		// Check if there are resources waiting to be picked up by an agent.
+		if (simulator.waitingResources.size() > 0) {
+			// get the closest resource that will not expire before the agent reaches it
+			ResourceEvent bestResource = null;
+			long earliest = Long.MAX_VALUE;
+			for (ResourceEvent res : simulator.waitingResources) {
+				// If res is in waitingResources, then it must have not expired yet
+				long travelTime = simulator.map.travelTimeBetween(loc, res.pickupLoc);
+
+				if (travelTime <= 20) {
+					// if the resource is reachable before expiration
+					long arriveTime = time + travelTime;
+					if (arriveTime <= res.expirationTime && arriveTime < earliest) {
+						earliest = arriveTime;
+						bestResource = res;
+					}
+				}
+			}
+
+			// if a a waiting resource is reachable in time by this agent make an assignment
+			if (bestResource != null) {
+				if (bestResource.availableTime >= simulator.simulationBeginTime + simulator.WarmUpTime) {
+					// update the statistics
+					long cruiseTime = time - startSearchTime;
+					long approachTime = earliest - time;
+					long searchTime = cruiseTime + approachTime;
+					long waitTime = earliest - bestResource.availableTime;
+
+					simulator.totalAgentCruiseTime += cruiseTime;
+					simulator.totalAgentApproachTime += approachTime;
+					simulator.totalAgentSearchTime += searchTime;
+					simulator.totalResourceWaitTime += waitTime;
+					simulator.totalResourceTripTime += bestResource.tripTime;
+					simulator.totalAssignments++;
+
+					FileWriter fw2 = new FileWriter("Resource and Expiration Results/resourceWaitingTime.csv", true);
+					PrintWriter pw2 = new PrintWriter(fw2);
+					pw2.write(waitTime + "\n");
+					pw2.close();
+				}
+
+//				// keep a record of meetings
+//				String meetingLogName = simulator.meetingLogName;
+//				FileWriter fw3 = new FileWriter(meetingLogName, true);
+//				PrintWriter pw3 = new PrintWriter(fw3);
+//				pw3.write(time + "," + bestResource.pickupLoc.road.id + "\n");
+//				pw3.close();
 
 				// Inform the assignment to the agent.
 				assignedTo(loc, time, bestResource.id, bestResource.pickupLoc, bestResource.dropoffLoc);
@@ -206,6 +266,10 @@ public class AgentEvent extends Event {
 //				Logger.getLogger(this.getClass().getName()).log(Level.INFO, "wait time = " + waitTime + " seconds.", this);
 //				Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next trigger time = " + time, this);
 				return this;
+			} else {
+				// Let agent plan a search route after the current dropoff.
+				LocationOnRoad locAgentCopy = simulator.agentCopy(loc);
+				agent.planSearchRoute(locAgentCopy, time);
 			}
 		}
 

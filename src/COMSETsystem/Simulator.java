@@ -34,7 +34,8 @@ public class Simulator {
 	public ProbabilityMatrix probabilityTable;
 	public int WarmUpTime;
 
-//	// The output file names to record the time and location of resource introduction/expiration
+//	// The output file names to record relevant resource information
+//	public String agentLogName = "";
 //	public String resourceLogName = "";
 //	public String expirationLogName = "";
 //	public String meetingLogName = "";
@@ -103,9 +104,6 @@ public class Simulator {
 
 	// The number of agents that are deployed (at the beginning of the simulation).
 	public long totalAgents;
-
-	// MODIFICATION: The number of agents at the beginning of decentralised cruising
-	public int initialAgents;
 
 	// The number of assignments that have been made.
 	public long totalAssignments = 0;
@@ -226,97 +224,6 @@ public class Simulator {
 
 		// Initialize the event queue.
 		events = mapWD.getEvents();
-
-//		try {
-//			PrintWriter writer = new PrintWriter("roadConnectivityWithTravelTimeSpeed.txt", "UTF-8");
-//			List<Road> rs = map.roads();
-//			writer.println("roadId,from_node,to_node,from_node_lat,from_node_lon,to_node_lat,to_node_lon,length,travel_time");
-//			for (Road r : rs) {
-//				writer.print(r.id);
-//				writer.print(",");
-//				writer.print(r.from.id);
-//				writer.print(",");
-//				writer.print(r.to.id);
-//				writer.print(",");
-//				writer.print(r.from.latitude);
-//				writer.print(",");
-//				writer.print(r.from.longitude);
-//				writer.print(",");
-//				writer.print(r.to.latitude);
-//				writer.print(",");
-//				writer.print(r.to.longitude);
-//				writer.print(",");
-//				writer.print(r.length);
-//				writer.print(",");
-//				writer.print(r.travelTime);
-//				writer.println();
-//			}
-//			writer.close();
-//		}catch(IOException ioe){
-//			ioe.printStackTrace();
-//		}
-//			writer.close();
-//			writer.println("roadId,toto,fromfrom,tofrom,fromto");
-//			for(Road r:rs){
-//				Intersection to = r.to;
-//				Intersection from = r.from;
-//
-//				Set<Road> ToTo = to.getRoadsTo();
-//				Set<Road> FromFrom = from.getRoadsFrom();
-//				Set<Road> ToFrom = to.getRoadsFrom();
-//				Set<Road> FromTo = from.getRoadsTo();
-//
-//				writer.print(r.id+",");
-//				for (Road n:ToTo) {
-//					writer.print(n.id + " ");
-//				}
-//				writer.print(",");
-//				for (Road n:FromFrom) {
-//					writer.print(n.id + " ");
-//				}
-//				writer.print(",");
-//				for (Road n:ToFrom) {
-//					writer.print(n.id + " ");
-//				}
-//				writer.print(",");
-//				for (Road n:FromTo) {
-//					writer.print(n.id + " ");
-//				}
-//				writer.println();
-//			}
-//			writer.close();
-//			PrintWriter writer2 = new PrintWriter("intersection_list.txt", "UTF-8");
-//			Map<Long, Intersection> ints = map.intersections();
-//			writer2.println("origin,from,to,lon,lat");
-//			for(Long l:ints.keySet()){
-//
-//				writer2.print(l+",");
-//				Intersection L = ints.get(l);
-//
-//				for (Intersection af :L.getAdjacentFrom()) {
-//					writer2.print(af.id + "-");
-//					writer2.print(L.roadTo(af).id);
-//					writer2.print(" ");
-//
-//				}
-//				writer2.print(",");
-//				for (Intersection at :L.getAdjacentTo()) {
-//					writer2.print(at.id + "-");
-//					writer2.print(at.roadTo(L).id);
-//					writer2.print(" ");
-//				}
-//				writer2.print(",");
-//				writer2.print(L.longitude);
-//				writer2.print(",");
-//				writer2.print(L.latitude);
-//				writer2.print(",");
-//				writer2.print(L.latitude);
-//				writer2.println();
-//			}
-//			writer2.close();
-//		}catch(IOException ioe){
-//			ioe.printStackTrace();
-//		}
 	}
 
 	/**
@@ -334,51 +241,26 @@ public class Simulator {
 			System.out.println("map is null at beginning of run");
 		}
 
-//		String properties = "";
-//		StringBuilder sb = new StringBuilder();
-//		try {
-//			Properties prop = new Properties();
-//			prop.load(new FileInputStream("etc/config.properties"));
-//			String fleetSize = prop.getProperty("comset.number_of_agents").trim();
-//			sb.append(fleetSize);
-//			String test_file = prop.getProperty("comset.dataset_file").trim().replaceAll(
-//					"Raw_Yellow_Taxi_Data/", "_").replaceAll(".csv", "");
-//			sb.append(test_file);
-//			String method = prop.getProperty("comset.agent_class").trim();
-//			if (method.equals("UserExamples.AgentRandomDestination")){
-//				method = "RandomDest";
-//			}else{
-//				method = "Independent";
-//			}
-//			sb.append("_");
-//			sb.append(method);
-//			String road_cluster_file = prop.getProperty("cluster.road_cluster_file").trim();
-//			String substr = road_cluster_file.substring(12,road_cluster_file.length()-4);
-//			sb.append("_");
-//			sb.append(substr);
-//		} catch (IOException ioe) {
-//			ioe.printStackTrace();
-//		}
-//		properties = properties + sb.toString();
-//		String agentLogName = "Resource and Expiration Results/05_01_Agents_" + properties + ".csv";
+		// CREATE LOG FILES ONLY ONCE!!!
+//		String agentLogName = "Resource and Expiration Results/08_28_Agents.csv";
 //		FileWriter fw = new FileWriter(agentLogName);
 //		PrintWriter pw = new PrintWriter(fw);
 //		pw.write("time,empty_agents,waiting_resources\n");
 //		pw.close();
 
-//		resourceLogName = "Resource and Expiration Results/05_01_Resources_" + properties + ".csv";
+//		resourceLogName = "Resource and Expiration Results/08_28_Resources.csv";
 //		FileWriter fw1 = new FileWriter(resourceLogName);
 //		PrintWriter pw1 = new PrintWriter(fw1);
 //		pw1.write("time,new_resource\n");
 //		pw1.close();
 
-//		expirationLogName = "Resource and Expiration Results/05_01_Expiration_"+properties+".csv";
+//		expirationLogName = "Resource and Expiration Results/08_28_Expiration.csv";
 //		FileWriter fw2 = new FileWriter(expirationLogName);
 //		PrintWriter pw2 = new PrintWriter(fw2);
 //		pw2.write("time,expiration\n");
 //		pw2.close();
 
-//		meetingLogName = "Resource and Expiration Results/05_01_Meeting_"+properties+".csv";
+//		meetingLogName = "Resource and Expiration Results/08_28_Meeting.csv";
 //		FileWriter fw3 = new FileWriter(meetingLogName);
 //		PrintWriter pw3 = new PrintWriter(fw3);
 //		pw3.write("time,meeting\n");
@@ -389,7 +271,8 @@ public class Simulator {
 		StringBuilder sb = new StringBuilder();
 		sb.append("time,").append("totalAgentSize,");
 		for (int i=0; i<clusterSet.size(); i++) {
-			sb.append(i).append(",");
+			sb.append(i);
+			if (i != clusterSet.size() - 1) sb.append(",");
 		}
 		pw.write(sb.append("\n").toString());
 		pw.close();
@@ -415,8 +298,8 @@ public class Simulator {
 					pw.close();
 					recordTime = events.peek().time;
 
-//					fw = new FileWriter(agentLogName, true);
-//					pw = new PrintWriter(fw);
+//					FileWriter fw = new FileWriter(agentLogName, true);
+//					PrintWriter pw = new PrintWriter(fw);
 //					StringBuilder emptyAgentLoc = new StringBuilder();
 //					StringBuilder waitingResourceLoc = new StringBuilder();
 //					for (AgentEvent e : emptyAgents) {
@@ -522,7 +405,7 @@ public class Simulator {
 			System.out.println("Resource dataset file: " + resourceFile);
 			System.out.println("Bounding polygon KML file: " + boundingPolygonKMLFile);
 			System.out.println("Number of agents: " + totalAgents);
-			System.out.println("Number of resources: " + decentralisedResources);
+			System.out.println("Number of resources: " + (decentralisedResources));
 			System.out.println("Resource Maximum Life Time: " + ResourceMaximumLifeTime + " seconds");
 			System.out.println("Agent class: " + agentClass.getName());
 
@@ -537,15 +420,15 @@ public class Simulator {
 					totalRemainTime += (simulationEndTime - ae.startSearchTime);
 				}
 
+//				sb.append("number of central matching: ").append(centralAssignments).append("\n");
 				sb.append("total number of assignments: ").append(totalAssignments).append("\n");
-//				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, decentralisedResources)).append("%\n");
-				sb.append("resource expiration percentage: ").append(Math.floorDiv((decentralisedResources - totalAssignments) * 100, decentralisedResources)).append("%\n");
+				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, (decentralisedResources - waitingResources.size()))).append("%\n");
 				sb.append("average agent search time: ").append(Math.floorDiv(totalAgentSearchTime + totalRemainTime, totalAgents)).append(" seconds \n");
-				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, decentralisedResources)).append(" seconds \n");
+				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, (decentralisedResources - waitingResources.size()))).append(" seconds \n");
 				sb.append("\n");
-				sb.append("average agent cruise time: ").append(Math.floorDiv(totalAgentCruiseTime, totalAssignments)).append(" seconds \n");
-				sb.append("average agent approach time: ").append(Math.floorDiv(totalAgentApproachTime, totalAssignments)).append(" seconds \n");
-				sb.append("average resource trip time: ").append(Math.floorDiv(totalResourceTripTime, totalAssignments)).append(" seconds \n");
+//				sb.append("average agent cruise time: ").append(Math.floorDiv(totalAgentCruiseTime, totalAssignments)).append(" seconds \n");
+//				sb.append("average agent approach time: ").append(Math.floorDiv(totalAgentApproachTime, totalAssignments)).append(" seconds \n");
+//				sb.append("average resource trip time: ").append(Math.floorDiv(totalResourceTripTime, totalAssignments)).append(" seconds \n");
 			} else {
 				sb.append("No resources.\n");
 			}

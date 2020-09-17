@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 
 public class TimeEvent extends Event {
 
-    static int version;
+    static int version = 1;
     static int triggerInterval;
 
     public TimeEvent(long time, Simulator simulator) throws IOException, InterruptedException {
@@ -31,7 +31,7 @@ public class TimeEvent extends Event {
             Set<Event> resourcePartition = new HashSet<>();
             for (AgentEvent a: agents) {
                 for (ResourceEvent r : resources) {
-                    long eta = getApproachTime(a, r);
+                    long eta = simulator.map.travelTimeBetween(a.loc, r.pickupLoc);
                     if (eta < simulator.ResourceMaximumLifeTime) {
                         DefaultWeightedEdge e = new DefaultWeightedEdge();
                         if (!g.containsVertex(a)) {
@@ -47,7 +47,7 @@ public class TimeEvent extends Event {
                     }
                 }
             }
-//            simulator.waitingResources.removeAll(expiredEvents);
+    //            simulator.waitingResources.removeAll(expiredEvents);
             //        System.out.println("Number of agent"+agents.size());
             //        System.out.println("Number of resources"+resourceEvents.size());
             MaximumWeightBipartiteMatching matchObject = new MaximumWeightBipartiteMatching(g, agentPartition, resourcePartition);
@@ -60,28 +60,32 @@ public class TimeEvent extends Event {
                 AssignAgentToResource(agent, resource);
             }
 
-            simulator.initialAgents = agents.size();
         } else {
             // Java output to "Optimiser IO" for Python solver, after warm-up
             triggerInterval = 300;
 
             int totalClusterSize = simulator.clusterSet.size();
-            int agentSize = simulator.emptyAgents.size();
-//            int agentSize = simulator.initialAgents; // This could be zero and becomes neighbouring random
+            int agentSize = 2500; // Fixed guess fleet size
+//            int agentSize = simulator.emptyAgents.size();
 //            System.out.println(agentSize);
 
+            // Actual resource distribution
+            FileWriter fw2 = new FileWriter(new File("Resource and Expiration Results/Actual R.csv"), true);
+            BufferedWriter writer2 = new BufferedWriter(fw2);
+            String sb2 = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n";
+            writer2.write(sb2);
+            writer2.close();
+
+            // Estimate resources in Python optimiser
             FileWriter fw = new FileWriter(new File("Optimiser IO/input.csv"), true);
             BufferedWriter writer = new BufferedWriter(fw);
-//            String sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
-//                    agentSize + "\n" +
-//                    "hashcode," + version;
             String sb;
-            if (version == 0) {
+            if (simulator.probabilityTable.Version == 0) {
                 sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
                     agentSize + "\n" +
                     "hashcode," + version;
             } else {
-                sb = "\n" + agentSize + "\n" + "hashcode," + version;
+                sb = agentSize + "\n" + "hashcode," + version;
             }
             writer.write(sb);
             writer.close();
@@ -110,8 +114,8 @@ public class TimeEvent extends Event {
                 }
                 lineIdx++;
             }
-            simulator.probabilityTable.updateMatrix(transitionMatrix);
 
+            simulator.probabilityTable.updateMatrix(transitionMatrix);
             assert simulator.probabilityTable.Version == version : "version mismatch";
             version++;
         }
@@ -132,42 +136,26 @@ public class TimeEvent extends Event {
         return false;
     }
 
-    private long getApproachTime(AgentEvent a, ResourceEvent r) {
-        long travelTimeToEndIntersection = a.time - r.time;
-        long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;
-        LocationOnRoad agentLocationOnRoad = new LocationOnRoad(a.loc.road, travelTimeFromStartIntersection);
-        long travelTime = simulator.map.travelTimeBetween(agentLocationOnRoad, r.pickupLoc);
-
-        return travelTime;
-    }
-
     private void AssignAgentToResource(AgentEvent a, ResourceEvent r) {
-//        //record meeting/assignment of resource to agent
-//        FileWriter fw = new FileWriter(simulator.meetingLogName, true);
-//        PrintWriter pw = new PrintWriter(fw);
-//        long meetTime = time + getApproachTime(a, r);
-//        pw.write( meetTime + "," + r.pickupLoc.road.id + "\n");
-//        pw.close();
 
-        long travelTimeToEndIntersection = a.time - r.time;
-        long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;
-        LocationOnRoad agentLocationOnRoad = new LocationOnRoad(a.loc.road, travelTimeFromStartIntersection);
+//        long travelTimeToEndIntersection = a.time - r.time;
+//        long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;
+//        LocationOnRoad agentLocationOnRoad = new LocationOnRoad(a.loc.road, travelTimeFromStartIntersection);
 
 //        long cruiseTime = time - a.startSearchTime;
-//        long approachTime = getApproachTime(a, r);
-//
+//        long approachTime = simulator.map.travelTimeBetween(a.loc, r.pickupLoc);
 //        long searchTime = cruiseTime + approachTime;
 //        long waitTime = time + approachTime - r.availableTime;
 
 //        simulator.totalAgentCruiseTime += cruiseTime;
 //        simulator.totalAgentApproachTime += approachTime;
-//        simulator.totalAgentSearchTime += searchTime;
+////        simulator.totalAgentSearchTime += searchTime;
 //        simulator.totalResourceWaitTime += waitTime;
 //        simulator.totalResourceTripTime += r.tripTime;
         simulator.centralAssignments++;
 
         // Inform the assignment to the agent.
-        a.assignedTo(agentLocationOnRoad, time, id, r.pickupLoc, r.dropoffLoc);
+        a.assignedTo(a.loc, time, id, r.pickupLoc, r.dropoffLoc);
 
         // "Label" the agent as occupied.
         simulator.emptyAgents.remove(a);
@@ -176,7 +164,7 @@ public class TimeEvent extends Event {
         simulator.events.remove(r);
 //        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Assigned to agent id = " + a.id + " currently at " + a.loc, this);
 
-        a.setEvent(getApproachTime(a, r) + r.time + r.tripTime, r.dropoffLoc, AgentEvent.DROPPING_OFF);
+        a.setEvent(time + simulator.map.travelTimeBetween(a.loc, r.pickupLoc) + r.tripTime, r.dropoffLoc, AgentEvent.DROPPING_OFF);
         simulator.events.add(a);
 
 //        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "From agent to resource = " + approachTime + " seconds.", this);
@@ -190,6 +178,11 @@ public class TimeEvent extends Event {
 
     @Override
     Event trigger() throws Exception {
-        return new TimeEvent(this.time + triggerInterval, simulator);
+//        if (this.time + triggerInterval < simulator.simulationBeginTime + simulator.WarmUpTime) {
+        if (this.time + triggerInterval < simulator.simulationEndTime) {
+            return new TimeEvent(time + triggerInterval, simulator);
+        } else {
+            return null;
+        }
     }
 }

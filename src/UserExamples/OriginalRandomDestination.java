@@ -68,6 +68,7 @@ public class OriginalRandomDestination extends BaseAgent {
             destinationIntersection = roadsFrom[0].to;
         }
         route = map.bestCrusiseTimePath(sourceIntersection, destinationIntersection);
+//        route = map.shortestTravelTimePath(sourceIntersection, destinationIntersection);
         route.poll(); // Ensure that route.get(0) != currentLocation.road.to.
     }
 

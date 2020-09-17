@@ -15,6 +15,7 @@ public class AgentIndependent extends BaseAgent {
     static RoadClusterParser rcp;
     static Map<Integer, Cluster> clusters;
     static ClusterTool ct;
+    int tableVersion;
 
 //    boolean failed = false; // flag value indicating if the last agent search failed
 //    boolean start = true;
@@ -104,8 +105,10 @@ public class AgentIndependent extends BaseAgent {
     @Override
     public void planSearchRoute(LocationOnRoad currentLocation, long currentTime) {
 
+        route.clear();
         Cluster c = ct.getClusterFromRoad(currentLocation.road);
         HashMap<Integer, Double> options = new HashMap<>();
+        tableVersion = map.simulator.probabilityTable.Version;
 
 //        if(id % 10000 == 0){
 //            System.out.println("Replan");
@@ -161,6 +164,7 @@ public class AgentIndependent extends BaseAgent {
                 options.put(i, map.simulator.probabilityTable.Matrix[i][c.id]);
             }
         }
+
         int target = choiceModel.choiceByProbability(options);
         Cluster dest = clusters.get(target);
 
@@ -170,14 +174,18 @@ public class AgentIndependent extends BaseAgent {
             //safety concern only
             roads = clusters.get(0).roads;
         }
-        Road destinationRoad = choiceModel.getRandomFromSet(roads);
 
-//        // apply another Logit choice model at the road level within the destination cluster
-//        HashMap<Integer, Double> road_options = new HashMap<>();
-//        for (Road r : dest.roads) {
-//            road_options.put((int) r.id, Math.exp(1.0 / r.rating));
-//        }
-//        Road destinationRoad = rcp.roadIdLookup.get((long) choiceModel.choiceByProbability(road_options));
+        Road destinationRoad;
+        // apply another Logit choice model at the road level within the destination cluster
+        if (dest == c) {
+            HashMap<Long, Double> road_options = new HashMap<>();
+            for (Road r : dest.roads) {
+                road_options.put(r.id, Math.exp(1.0 / r.rating));
+            }
+            destinationRoad = rcp.roadIdLookup.get(choiceModel.choiceByProbability(road_options));
+        } else {
+            destinationRoad = choiceModel.getRandomFromSet(roads);
+        }
 
         // the agent is dispatched to the end (intersection) of the destination road
         Intersection sourceIntersection = currentLocation.road.to;
@@ -206,67 +214,8 @@ public class AgentIndependent extends BaseAgent {
 
     @Override
     public Intersection nextIntersection(LocationOnRoad currentLocation, long currentTime) {
-
-//        timer += currentTime - prevTime;
-//        if(this.id % 10 == 0){
-//            System.out.print(timer + " ");
-//        }
-//        prevTime = currentTime;
-
-//        Cluster c = ct.getClusterFromRoad(currentLocation.road);
-
-//        // activate "canpickup" when the agent enters the destination cluster
-//        if (c.id == planned_destination_cluster) canpickup = true;
-
-//        if (c.id != prev_cluster) {
-//            prev_cluster = c.id;
-//            timer = 0; // "timer" clears when agent moves to a new cluster
-//        }
-
-//        // choose another destination if the search time limit is exceeded
-//        if (route.size() >= 1) { // && timer > c.getSearchTime()){
-//            //System.out.println("Triggered reset in cluster " + c.id);
-//            replan_count[c.id] += 1;
-//            Intersection sourceIntersection = route.get(0);
-//            route.clear();
-//
-//            HashMap<Integer,Double> options = new HashMap<>();
-//
-//            for (int i = 0; i < attract.length; i++){
-//                if (i != c.id && !c.nbs.contains(i)) {
-//                    options.put(i, Math.exp(attract[i]));
-//                }
-//            }
-//
-//            Integer target = epsTool.destinationChoice(options);
-//            Cluster dest = clusters.get(target);
-//
-//            HashSet<Road> roads = dest.roads;
-//            if(roads == null || roads.size() == 0){
-//                roads = clusters.get(0).roads;
-//                dest = clusters.get(0);
-//
-//            }
-//            design_to_go[dest.id] += 1;
-//            planned_destination_cluster = dest.id;
-//            Road destinationRoad = epsTool.getRandomFromSet(roads);
-//            Intersection destinationIntersection = destinationRoad.to;
-//
-//            if (sourceIntersection == destinationIntersection) {
-//                Road[] roadsFrom = sourceIntersection.roadsMapFrom.values().toArray(new Road[sourceIntersection.roadsMapFrom.values().size()]);
-//                destinationIntersection = roadsFrom[0].to;
-//            }
-//            route = map.shortestTravelTimePath(
-//                    sourceIntersection, destinationIntersection);
-//            timer = -600;
-//            //System.out.println("Finished");
-//            failed = true;
-//            return route.poll();
-//        }
-
-
-        // Original nextIntersection
-        if (route.size() != 0) {
+//        if (route.size() != 0) { // ORIGINAL condition
+        if (route.size() != 0 && tableVersion == map.simulator.probabilityTable.Version) {
             // Route is not empty, take the next intersection.
             Intersection nextIntersection = route.poll();
             return nextIntersection;
@@ -281,14 +230,8 @@ public class AgentIndependent extends BaseAgent {
     public void assignedTo(LocationOnRoad currentLocation, long currentTime, long resourceId, LocationOnRoad resourcePickupLocation, LocationOnRoad resourceDropoffLocation) {
 //        timer = 0;
 //        prevTime = -1;
-//        int actual_destination_cluster_id = ct.getClusterFromRoad(resourcePickupLocation.road).id;
-//        if (actual_destination_cluster_id == planned_destination_cluster){
-//            pickup_as_designed[actual_destination_cluster_id] += 1;
-//        }else{
-//            pickuped_by_others[actual_destination_cluster_id] += 1;
-//        }
+//        failed = false;
 
         route.clear();
-//        failed = false;
     }
 }

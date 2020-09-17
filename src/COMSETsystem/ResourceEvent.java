@@ -1,9 +1,8 @@
 package COMSETsystem;
 
-import java.io.*;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  *
@@ -18,9 +17,6 @@ import java.util.logging.Logger;
  * 2. When the resource gets expired.
  */
 public class ResourceEvent extends Event {
-
-	//	static boolean firstExpire = true;
-	//	static boolean firstResource = true;
 
 	// Constants representing two causes for which the ResourceEvent can be triggered.
 	public final static int BECOME_AVAILABLE = 0;
@@ -76,8 +72,8 @@ public class ResourceEvent extends Event {
 	@Override
 	Event trigger() throws Exception {
 
-		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "******** ResourceEvent id = "+ id + " triggered at time " + time, this);
-		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Loc = " + this.pickupLoc + "," + this.dropoffLoc, this);
+//		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "******** ResourceEvent id = "+ id + " triggered at time " + time, this);
+//		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Loc = " + this.pickupLoc + "," + this.dropoffLoc, this);
 
 		if (simulator.map == null) {
 			System.out.println("map is null in resource");
@@ -100,7 +96,7 @@ public class ResourceEvent extends Event {
 	public Event becomeAvailableHandler() throws IOException {
 		//total number of resources from dataset appearing through the simulation increases
 		++simulator.totalResources;
-		if (time >= simulator.simulationBeginTime + simulator.WarmUpTime) ++simulator.decentralisedResources;
+		if (availableTime >= simulator.simulationBeginTime + simulator.WarmUpTime) ++simulator.decentralisedResources;
 
 //		String resourceLogName = simulator.resourceLogName;
 //		FileWriter fw1 = new FileWriter(resourceLogName, true);
@@ -127,7 +123,7 @@ public class ResourceEvent extends Event {
 
 			long travelTime = simulator.map.travelTimeBetween(agentLocationOnRoad, pickupLoc);
 			long arriveTime = travelTime + time;
-			if (arriveTime < earliest && travelTime <= 40) {
+			if (arriveTime < earliest && travelTime <= 20) {
 				bestAgent = agent;
 				earliest = arriveTime;
 				bestAgentLocationOnRoad = agentLocationOnRoad;
@@ -138,31 +134,18 @@ public class ResourceEvent extends Event {
 			simulator.waitingResources.add(this);
 			this.time += simulator.ResourceMaximumLifeTime;
 			this.eventCause = EXPIRED;
-			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Setup expiration event at time " + this.time, this);
 
-//			// keep a record of the expired resources
-//			String expirationLogName = simulator.expirationLogName;
-//			FileWriter fw2 = new FileWriter(expirationLogName, true);
-//			PrintWriter pw2 = new PrintWriter(fw2);
-//			pw2.write(expirationTime + "," + pickupLoc.road.id + "\n");
-//			pw2.close();
+//			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Setup expiration event at time " + this.time, this);
 
 			return this;
 
 		} else {
-			if (time >= simulator.simulationBeginTime + simulator.WarmUpTime) {
+			if (availableTime >= simulator.simulationBeginTime + simulator.WarmUpTime) {
 				// make assignment and update statistics
 				long cruiseTime = time - bestAgent.startSearchTime;
 				long approachTime = earliest - time;
 				long searchTime = cruiseTime + approachTime;
 				long waitTime = earliest - availableTime;
-
-//				// keep a record of meetings
-//				String meetingLogName = simulator.meetingLogName;
-//				FileWriter fw3 = new FileWriter(meetingLogName, true);
-//				PrintWriter pw3 = new PrintWriter(fw3);
-//				pw3.write(time + "," + pickupLoc.road.id + "\n");
-//				pw3.close();
 
 				simulator.totalAgentCruiseTime += cruiseTime;
 				simulator.totalAgentApproachTime += approachTime;
@@ -170,7 +153,19 @@ public class ResourceEvent extends Event {
 				simulator.totalResourceWaitTime += waitTime;
 				simulator.totalResourceTripTime += tripTime;
 				simulator.totalAssignments++;
+
+				FileWriter fw2 = new FileWriter("Resource and Expiration Results/resourceWaitingTime.csv", true);
+				PrintWriter pw2 = new PrintWriter(fw2);
+				pw2.write(waitTime + "\n");
+				pw2.close();
 			}
+
+//			// keep a record of meetings
+//			String meetingLogName = simulator.meetingLogName;
+//			FileWriter fw3 = new FileWriter(meetingLogName, true);
+//			PrintWriter pw3 = new PrintWriter(fw3);
+//			pw3.write(time + "," + pickupLoc.road.id + "\n");
+//			pw3.close();
 
 			// Inform the assignment to the agent.
 			bestAgent.assignedTo(bestAgentLocationOnRoad, time, id, pickupLoc, dropoffLoc);
@@ -178,7 +173,7 @@ public class ResourceEvent extends Event {
 			// "Label" the agent as occupied.
 			simulator.emptyAgents.remove(bestAgent);
 			simulator.events.remove(bestAgent);
-			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Assigned to agent id = " + bestAgent.id + " currently at " + bestAgent.loc, this);
+//			Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Assigned to agent id = " + bestAgent.id + " currently at " + bestAgent.loc, this);
 
 			bestAgent.setEvent(earliest + tripTime, dropoffLoc, AgentEvent.DROPPING_OFF);
 
@@ -198,12 +193,25 @@ public class ResourceEvent extends Event {
 	/*
 	 * Handler of an EXPIRED event.
 	 */
-	public void expireHandler() {
-		if (time >= simulator.simulationBeginTime + simulator.WarmUpTime) {
+	public void expireHandler() throws IOException {
+		if (availableTime >= simulator.simulationBeginTime + simulator.WarmUpTime) {
 			simulator.expiredResources++;
 			simulator.totalResourceWaitTime += simulator.ResourceMaximumLifeTime;
+
+			FileWriter fw2 = new FileWriter("Resource and Expiration Results/resourceWaitingTime.csv", true);
+			PrintWriter pw2 = new PrintWriter(fw2);
+			pw2.write(simulator.ResourceMaximumLifeTime + "\n");
+			pw2.close();
 		}
+
+//		// keep a record of the expired resources
+//		String expirationLogName = simulator.expirationLogName;
+//		FileWriter fw2 = new FileWriter(expirationLogName, true);
+//		PrintWriter pw2 = new PrintWriter(fw2);
+//		pw2.write(expirationTime + "," + pickupLoc.road.id + "\n");
+//		pw2.close();
+
 		simulator.waitingResources.remove(this);
-		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Expired.", this);
+//		Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Expired.", this);
 	}
 }
