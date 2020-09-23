@@ -26,7 +26,7 @@ def findV(ListR, TotalV, hashCode):
                                   options={'ftol': 1e-9, 'maxiter': 100 * len(x0)}, bounds=bounds)
 
     # Estimate from historical resource pattern. Use columns AFTER simulation warm-up
-    historicalR = pd.read_csv('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/historical_R (39 clusters).csv', header=None, usecols=[hashCode+12], squeeze=True).values
+    historicalR = pd.read_csv('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/historical_R (39 clusters).csv', header=None, usecols=[hashCode+11], squeeze=True).values
     newR = ListR + historicalR - np.multiply(np.multiply(Alpha, np.power(ListR, GAMMA1)), np.power(res.x, GAMMA2))
     newR[newR < 0] = 0
     np.savetxt('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/input.csv', newR.reshape(1, newR.shape[0]), fmt='%.9f', delimiter=',')
@@ -41,7 +41,7 @@ def findM(eigenVector):
     ub = []
     df = pd.read_csv('S:/USYD/Research/Decentralised Cruising/Taxi/ClusterData/cluster_min=50_max=500_alpha=-0.001_nb.csv', index_col='cluster_id')
     for i in df.index.sort_values():
-        adjacency = [0] * n
+        adjacency = [1e-10] * n
         for j in df.loc[i].str.split()[0]:
             adjacency[i] = 1
             adjacency[int(j)] = 1

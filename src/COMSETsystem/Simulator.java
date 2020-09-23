@@ -32,6 +32,9 @@ public class Simulator {
 	public HashSet<Integer> clusterSet;
 	public TreeMap<Integer, Integer> clusterResourceCount;
 	public ProbabilityMatrix probabilityTable;
+	public int[][] matrixA;
+	public int[][] matrixB;
+	public int[][] matrixC;
 	public int WarmUpTime;
 
 //	// The output file names to record relevant resource information
@@ -150,7 +153,7 @@ public class Simulator {
 	public void configure(String mapJSONFile, String resourceFile, Long totalAgents, String boundingPolygonKMLFile, Long maximumLifeTime, long agentPlacementRandomSeed, double speedReduction) {
 
 		this.WarmUpTime = 3600;
-		// Read cluster file and Create an empty probability table (Version 0)
+		// Read cluster file and Create a uniform probability table (Version 0)
 		if (roadToCluster == null) {
 			roadToCluster = new HashMap<>();
 			clusterSet = new HashSet<>();
@@ -171,6 +174,9 @@ public class Simulator {
 			}
 		}
 		this.probabilityTable = new ProbabilityMatrix(clusterSet.size());
+		matrixA = new int[clusterSet.size()][clusterSet.size()];
+		matrixB = new int[clusterSet.size()][clusterSet.size()];
+		matrixC = new int[clusterSet.size()][clusterSet.size()];
 
 		this.clusterResourceCount = new TreeMap<>();
 

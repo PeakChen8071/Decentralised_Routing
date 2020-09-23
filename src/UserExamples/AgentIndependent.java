@@ -205,10 +205,8 @@ public class AgentIndependent extends BaseAgent {
         route = map.bestCrusiseTimePath(sourceIntersection, destinationIntersection);
 //        route = map.shortestTravelTimePath(sourceIntersection, destinationIntersection);
 
-//        timer = 0;
-//        prevTime = currentTime;
-//        failed = true;
-//        canpickup = false; // modify "canpickup" here and in the "nextIntersection" method to limit pick-up locations
+        originCluster = c.id;
+        destCluster = dest.id;
         route.poll();
     }
 
@@ -220,6 +218,11 @@ public class AgentIndependent extends BaseAgent {
             Intersection nextIntersection = route.poll();
             return nextIntersection;
         } else {
+            if (tableVersion != map.simulator.probabilityTable.Version && ct.getClusterFromRoad(currentLocation.road).id != destCluster) {
+                map.simulator.matrixC[destCluster][originCluster]++;
+            } else {
+                map.simulator.matrixB[destCluster][originCluster]++;
+            }
             // Finished the planned route. Plan a new route.
             planSearchRoute(currentLocation, currentTime);
             return route.poll();
@@ -228,10 +231,7 @@ public class AgentIndependent extends BaseAgent {
 
     @Override
     public void assignedTo(LocationOnRoad currentLocation, long currentTime, long resourceId, LocationOnRoad resourcePickupLocation, LocationOnRoad resourceDropoffLocation) {
-//        timer = 0;
-//        prevTime = -1;
-//        failed = false;
-
+        map.simulator.matrixA[destCluster][originCluster]++;
         route.clear();
     }
 }

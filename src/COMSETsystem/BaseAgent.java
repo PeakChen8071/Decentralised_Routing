@@ -17,6 +17,9 @@ public abstract class BaseAgent {
 
 	public boolean canAssignTo;
 
+	public int originCluster;
+	public int destCluster;
+
 	/**
 	 * BaseAgent constructor. 
 	 *
