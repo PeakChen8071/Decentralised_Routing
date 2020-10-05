@@ -139,7 +139,7 @@ public class AgentEvent extends Event {
 					simulator.totalResourceTripTime += bestResource.tripTime;
 					simulator.totalAssignments++;
 
-					FileWriter fw2 = new FileWriter("Resource and Expiration Results/resourceWaitingTime.csv", true);
+					FileWriter fw2 = new FileWriter("Optimiser_IO/resourceWaitingTime.csv", true);
 					PrintWriter pw2 = new PrintWriter(fw2);
 					pw2.write(waitTime + "\n");
 					pw2.close();
@@ -232,7 +232,7 @@ public class AgentEvent extends Event {
 					simulator.totalResourceTripTime += bestResource.tripTime;
 					simulator.totalAssignments++;
 
-					FileWriter fw2 = new FileWriter("Resource and Expiration Results/resourceWaitingTime.csv", true);
+					FileWriter fw2 = new FileWriter("Optimiser_IO/resourceWaitingTime.csv", true);
 					PrintWriter pw2 = new PrintWriter(fw2);
 					pw2.write(waitTime + "\n");
 					pw2.close();

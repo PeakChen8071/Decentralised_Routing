@@ -70,7 +70,7 @@ public class TimeEvent extends Event {
 //            System.out.println(agentSize);
 
             // Actual resource distribution
-            FileWriter fw2 = new FileWriter(new File("Resource and Expiration Results/Actual R.csv"), true);
+            FileWriter fw2 = new FileWriter(new File("Optimiser_IO/Actual R.csv"), true);
             BufferedWriter writer2 = new BufferedWriter(fw2);
             String sb2 = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n";
             writer2.write(sb2);
@@ -83,7 +83,7 @@ public class TimeEvent extends Event {
                 StringBuilder output;
 
                 // matrix A, successful assignment
-                fw3 = new FileWriter(new File("Resource and Expiration Results/Matrix " + version + "A.csv"));
+                fw3 = new FileWriter(new File("Optimiser_IO/Matrix " + version + "A.csv"));
                 writer3 = new BufferedWriter(fw3);
                 output = new StringBuilder();
                 for (int i=0; i<simulator.matrixA.length; i++) {
@@ -97,7 +97,7 @@ public class TimeEvent extends Event {
                 writer3.close();
 
                 // matrix B, unsuccessful assignment inside destination cluster
-                fw3 = new FileWriter(new File("Resource and Expiration Results/Matrix " + version + "B.csv"));
+                fw3 = new FileWriter(new File("Optimiser_IO/Matrix " + version + "B.csv"));
                 writer3 = new BufferedWriter(fw3);
                 output = new StringBuilder();
                 for (int i=0; i<simulator.matrixB.length; i++) {
@@ -111,7 +111,7 @@ public class TimeEvent extends Event {
                 writer3.close();
 
                 // matrix C, unsuccessful assignment outside destination cluster
-                fw3 = new FileWriter(new File("Resource and Expiration Results/Matrix " + version + "C.csv"));
+                fw3 = new FileWriter(new File("Optimiser_IO/Matrix " + version + "C.csv"));
                 writer3 = new BufferedWriter(fw3);
                 output = new StringBuilder();
                 for (int i=0; i<simulator.matrixC.length; i++) {
@@ -147,7 +147,7 @@ public class TimeEvent extends Event {
             writer.close();
 
             // Run Python Optimiser and fetch output matrix as probability table
-            Process p = new ProcessBuilder("python", "/home/ubuntu/Decentralised_Routing/src/UserExamples/Optimiser.py").start();
+            Process p = new ProcessBuilder("python3", "/home/ubuntu/Decentralised_Routing/src/UserExamples/Optimiser.py").start();
             p.waitFor();
             int len;
             if ((len = p.getErrorStream().available()) > 0) {

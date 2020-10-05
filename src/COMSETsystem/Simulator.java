@@ -248,25 +248,25 @@ public class Simulator {
 		}
 
 		// CREATE LOG FILES ONLY ONCE!!!
-//		String agentLogName = "Resource and Expiration Results/08_28_Agents.csv";
+//		String agentLogName = "Optimiser_IO/08_28_Agents.csv";
 //		FileWriter fw = new FileWriter(agentLogName);
 //		PrintWriter pw = new PrintWriter(fw);
 //		pw.write("time,empty_agents,waiting_resources\n");
 //		pw.close();
 
-//		resourceLogName = "Resource and Expiration Results/08_28_Resources.csv";
+//		resourceLogName = "Optimiser_IO/08_28_Resources.csv";
 //		FileWriter fw1 = new FileWriter(resourceLogName);
 //		PrintWriter pw1 = new PrintWriter(fw1);
 //		pw1.write("time,new_resource\n");
 //		pw1.close();
 
-//		expirationLogName = "Resource and Expiration Results/08_28_Expiration.csv";
+//		expirationLogName = "Optimiser_IO/08_28_Expiration.csv";
 //		FileWriter fw2 = new FileWriter(expirationLogName);
 //		PrintWriter pw2 = new PrintWriter(fw2);
 //		pw2.write("time,expiration\n");
 //		pw2.close();
 
-//		meetingLogName = "Resource and Expiration Results/08_28_Meeting.csv";
+//		meetingLogName = "Optimiser_IO/08_28_Meeting.csv";
 //		FileWriter fw3 = new FileWriter(meetingLogName);
 //		PrintWriter pw3 = new PrintWriter(fw3);
 //		pw3.write("time,meeting\n");

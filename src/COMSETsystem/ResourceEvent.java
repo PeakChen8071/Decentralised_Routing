@@ -154,7 +154,7 @@ public class ResourceEvent extends Event {
 				simulator.totalResourceTripTime += tripTime;
 				simulator.totalAssignments++;
 
-				FileWriter fw2 = new FileWriter("Resource and Expiration Results/resourceWaitingTime.csv", true);
+				FileWriter fw2 = new FileWriter("Optimiser_IO/resourceWaitingTime.csv", true);
 				PrintWriter pw2 = new PrintWriter(fw2);
 				pw2.write(waitTime + "\n");
 				pw2.close();
@@ -198,7 +198,7 @@ public class ResourceEvent extends Event {
 			simulator.expiredResources++;
 			simulator.totalResourceWaitTime += simulator.ResourceMaximumLifeTime;
 
-			FileWriter fw2 = new FileWriter("Resource and Expiration Results/resourceWaitingTime.csv", true);
+			FileWriter fw2 = new FileWriter("Optimiser_IO/resourceWaitingTime.csv", true);
 			PrintWriter pw2 = new PrintWriter(fw2);
 			pw2.write(simulator.ResourceMaximumLifeTime + "\n");
 			pw2.close();

@@ -30,7 +30,7 @@ def findV(ListR, TotalV, hashCode):
     newR = ListR + historicalR - np.multiply(np.multiply(Alpha, np.power(ListR, GAMMA1)), np.power(res.x, GAMMA2))
     newR[newR < 0] = 0
     np.savetxt('/home/ubuntu/Decentralised_Routing/Optimiser_IO/input.csv', newR.reshape(1, newR.shape[0]), fmt='%.9f', delimiter=',')
-    with open("/home/ubuntu/Decentralised_Routing/Resource and Expiration Results/Estimated R.csv", "a", newline='') as fp:
+    with open("/home/ubuntu/Decentralised_Routing/Optimiser_IO/Estimated R.csv", "a", newline='') as fp:
         wr = csv.writer(fp)
         wr.writerow(list(newR))
     return res.x
