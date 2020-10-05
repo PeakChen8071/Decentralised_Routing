@@ -61,7 +61,7 @@ public class TimeEvent extends Event {
             }
 
         } else {
-            // Java output to "Optimiser IO" for Python solver, after warm-up
+            // Java output to "Optimiser_IO" for Python solver, after warm-up
             triggerInterval = 300;
 
             int totalClusterSize = simulator.clusterSet.size();
@@ -129,7 +129,7 @@ public class TimeEvent extends Event {
             simulator.matrixC = new int[totalClusterSize][totalClusterSize];
 
             // Estimate resources in Python optimiser
-            File f = new File("Optimiser IO/input.csv");
+            File f = new File("Optimiser_IO/input.csv");
             if (f.exists()) {
                 f.delete();
             }
@@ -165,7 +165,7 @@ public class TimeEvent extends Event {
 //            Thread.sleep(1000);
 //        }
 
-            File matrixFile = new File("Optimiser IO/output_" + version + ".csv");
+            File matrixFile = new File("Optimiser_IO/output_" + version + ".csv");
             BufferedReader br = new BufferedReader(new FileReader(matrixFile));
             String line;
             int lineIdx = 0;
@@ -184,7 +184,7 @@ public class TimeEvent extends Event {
     }
 
     private boolean checkOutput(int hashcode) throws IOException {
-        File outputFile = new File("Optimiser IO/output_" + hashcode + ".csv");
+        File outputFile = new File("Optimiser_IO/output_" + hashcode + ".csv");
         try (BufferedReader br = new BufferedReader(new FileReader(outputFile))) {
             String lastline = null, line;
             while ((line = br.readLine()) != null) {

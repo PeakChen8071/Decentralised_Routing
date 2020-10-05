@@ -26,10 +26,10 @@ def findV(ListR, TotalV, hashCode):
                                   options={'ftol': 1e-9, 'maxiter': 100 * len(x0)}, bounds=bounds)
 
     # Estimate from historical resource pattern. Use columns AFTER simulation warm-up
-    historicalR = pd.read_csv('/home/ubuntu/Decentralised_Routing/Optimiser IO/historical_R (39 clusters).csv', header=None, usecols=[hashCode+11], squeeze=True).values
+    historicalR = pd.read_csv('/home/ubuntu/Decentralised_Routing/Optimiser_IO/historical_R (39 clusters).csv', header=None, usecols=[hashCode+11], squeeze=True).values
     newR = ListR + historicalR - np.multiply(np.multiply(Alpha, np.power(ListR, GAMMA1)), np.power(res.x, GAMMA2))
     newR[newR < 0] = 0
-    np.savetxt('/home/ubuntu/Decentralised_Routing/Optimiser IO/input.csv', newR.reshape(1, newR.shape[0]), fmt='%.9f', delimiter=',')
+    np.savetxt('/home/ubuntu/Decentralised_Routing/Optimiser_IO/input.csv', newR.reshape(1, newR.shape[0]), fmt='%.9f', delimiter=',')
     with open("/home/ubuntu/Decentralised_Routing/Resource and Expiration Results/Estimated R.csv", "a", newline='') as fp:
         wr = csv.writer(fp)
         wr.writerow(list(newR))
@@ -63,13 +63,13 @@ def findM(eigenVector):
     return res.x
 
 
-javaDf = pd.read_csv('/home/ubuntu/Decentralised_Routing/Optimiser IO/input.csv', header=None)
+javaDf = pd.read_csv('/home/ubuntu/Decentralised_Routing/Optimiser_IO/input.csv', header=None)
 R = javaDf.iloc[0, :].astype(float).tolist()
 V = int(javaDf.iloc[1, 0])
 hashCode = int(javaDf.iloc[2, 1])
     
-np.savetxt('/home/ubuntu/Decentralised_Routing/Optimiser IO/output_{}.csv'.format(hashCode),
+np.savetxt('/home/ubuntu/Decentralised_Routing/Optimiser_IO/output_{}.csv'.format(hashCode),
             findM(findV(R, V, hashCode)).reshape(len(R), len(R)), fmt='%.9f', delimiter=',')
 
-with open('/home/ubuntu/Decentralised_Routing/Optimiser IO/output_{}.csv'.format(hashCode),'a') as fd:
+with open('/home/ubuntu/Decentralised_Routing/Optimiser_IO/output_{}.csv'.format(hashCode),'a') as fd:
     fd.write('hashcode,{}'.format(hashCode))
