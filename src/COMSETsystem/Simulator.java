@@ -272,7 +272,7 @@ public class Simulator {
 //		pw3.write("time,meeting\n");
 //		pw3.close();
 
-		FileWriter fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv");
+		FileWriter fw = new FileWriter("Resource_and_Expiration_Results/totalV_and_Ri.csv");
 		PrintWriter pw = new PrintWriter(fw);
 		StringBuilder sb = new StringBuilder();
 		sb.append("time,").append("totalAgentSize,");
@@ -297,7 +297,7 @@ public class Simulator {
 				}
 
 				if (recordTime < events.peek().time) {
-					fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv", true);
+					fw = new FileWriter("Resource_and_Expiration_Results/totalV_and_Ri.csv", true);
 					pw = new PrintWriter(fw);
 					pw.write(events.peek().time + "," + emptyAgents.size() + ","
 							+ clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n");
