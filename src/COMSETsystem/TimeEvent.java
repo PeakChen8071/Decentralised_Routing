@@ -130,9 +130,6 @@ public class TimeEvent extends Event {
 
             // Estimate resources in Python optimiser
             File f = new File("Optimiser_IO/input.csv");
-            if (f.exists()) {
-                f.delete();
-            }
             FileWriter fw = new FileWriter(f, true);
             BufferedWriter writer = new BufferedWriter(fw);
             String sb;
