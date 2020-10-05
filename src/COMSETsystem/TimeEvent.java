@@ -147,7 +147,7 @@ public class TimeEvent extends Event {
             writer.close();
 
             // Run Python Optimiser and fetch output matrix as probability table
-            Process p = new ProcessBuilder("python", "/Users/linjichen/IdeaProjects/Decentralised_Routing/src/UserExamples/Optimiser.py").start();
+            Process p = new ProcessBuilder("python", "/home/ubuntu/Decentralised_Routing/src/UserExamples/Optimiser.py").start();
             p.waitFor();
             int len;
             if ((len = p.getErrorStream().available()) > 0) {

@@ -8,7 +8,7 @@ def findV(ListR, TotalV, hashCode):
     n = len(ListR)
     GAMMA1 = 0.354183; GAMMA2 = 0.147688 # 39 clusters
     Alpha = [0] * n
-    df = pd.read_csv('/Users/linjichen/IdeaProjects/Decentralised_Routing/ClusterData/cluster_alpha (39 clusters).csv', header=None)
+    df = pd.read_csv('/home/ubuntu/Decentralised_Routing/ClusterData/cluster_alpha (39 clusters).csv', header=None)
     for i in df.index:
         Alpha[df.iloc[i, 0]] = df.iloc[i, 1]
         
@@ -26,11 +26,11 @@ def findV(ListR, TotalV, hashCode):
                                   options={'ftol': 1e-9, 'maxiter': 100 * len(x0)}, bounds=bounds)
 
     # Estimate from historical resource pattern. Use columns AFTER simulation warm-up
-    historicalR = pd.read_csv('/Users/linjichen/IdeaProjects/Decentralised_Routing/Optimiser IO/historical_R (39 clusters).csv', header=None, usecols=[hashCode+11], squeeze=True).values
+    historicalR = pd.read_csv('/home/ubuntu/Decentralised_Routing/Optimiser IO/historical_R (39 clusters).csv', header=None, usecols=[hashCode+11], squeeze=True).values
     newR = ListR + historicalR - np.multiply(np.multiply(Alpha, np.power(ListR, GAMMA1)), np.power(res.x, GAMMA2))
     newR[newR < 0] = 0
-    np.savetxt('/Users/linjichen/IdeaProjects/Decentralised_Routing/Optimiser IO/input.csv', newR.reshape(1, newR.shape[0]), fmt='%.9f', delimiter=',')
-    with open("/Users/linjichen/IdeaProjects/Decentralised_Routing/Resource and Expiration Results/Estimated R.csv", "a", newline='') as fp:
+    np.savetxt('/home/ubuntu/Decentralised_Routing/Optimiser IO/input.csv', newR.reshape(1, newR.shape[0]), fmt='%.9f', delimiter=',')
+    with open("/home/ubuntu/Decentralised_Routing/Resource and Expiration Results/Estimated R.csv", "a", newline='') as fp:
         wr = csv.writer(fp)
         wr.writerow(list(newR))
     return res.x
@@ -39,7 +39,7 @@ def findV(ListR, TotalV, hashCode):
 def findM(eigenVector):
     n = len(eigenVector)
     ub = []
-    df = pd.read_csv('/Users/linjichen/IdeaProjects/Decentralised_Routing/ClusterData/cluster_min=50_max=500_alpha=-0.001_nb.csv', index_col='cluster_id')
+    df = pd.read_csv('/home/ubuntu/Decentralised_Routing/ClusterData/cluster_min=50_max=500_alpha=-0.001_nb.csv', index_col='cluster_id')
     for i in df.index.sort_values():
         adjacency = [1e-9] * n
         for j in df.loc[i].str.split()[0]:
@@ -63,13 +63,13 @@ def findM(eigenVector):
     return res.x
 
 
-javaDf = pd.read_csv('/Users/linjichen/IdeaProjects/Decentralised_Routing/Optimiser IO/input.csv', header=None)
+javaDf = pd.read_csv('/home/ubuntu/Decentralised_Routing/Optimiser IO/input.csv', header=None)
 R = javaDf.iloc[0, :].astype(float).tolist()
 V = int(javaDf.iloc[1, 0])
 hashCode = int(javaDf.iloc[2, 1])
     
-np.savetxt('/Users/linjichen/IdeaProjects/Decentralised_Routing/Optimiser IO/output_{}.csv'.format(hashCode),
+np.savetxt('/home/ubuntu/Decentralised_Routing/Optimiser IO/output_{}.csv'.format(hashCode),
             findM(findV(R, V, hashCode)).reshape(len(R), len(R)), fmt='%.9f', delimiter=',')
 
-with open('/Users/linjichen/IdeaProjects/Decentralised_Routing/Optimiser IO/output_{}.csv'.format(hashCode),'a') as fd:
+with open('/home/ubuntu/Decentralised_Routing/Optimiser IO/output_{}.csv'.format(hashCode),'a') as fd:
     fd.write('hashcode,{}'.format(hashCode))
