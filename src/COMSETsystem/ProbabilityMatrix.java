@@ -10,7 +10,7 @@ public class ProbabilityMatrix {
         Version = 0;
         Matrix = new double[n][n];
         for (int i=0; i<n; i++) {
-            Arrays.fill(Matrix[i], 1f/n);
+            Arrays.fill(Matrix[i], 1d/n);
         }
     }
 

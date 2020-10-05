@@ -164,36 +164,41 @@ public class AgentIndependent extends BaseAgent {
                 options.put(i, map.simulator.probabilityTable.Matrix[i][c.id]);
             }
         }
-
         int target = choiceModel.choiceByProbability(options);
         Cluster dest = clusters.get(target);
 
         // randomly select a road in the destination cluster as the destination road
         HashSet<Road> roads = dest.roads;
+        Road destinationRoad;
         if(roads == null || roads.size() == 0) {
             //safety concern only
             roads = clusters.get(0).roads;
         }
 
-        Road destinationRoad;
         // apply another Logit choice model at the road level within the destination cluster
-        if (dest == c) {
+        if (dest == c) { // STAY
             HashMap<Long, Double> road_options = new HashMap<>();
             for (Road r : dest.roads) {
                 road_options.put(r.id, Math.exp(1.0 / r.rating));
             }
             destinationRoad = rcp.roadIdLookup.get(choiceModel.choiceByProbability(road_options));
-        } else {
-            destinationRoad = choiceModel.getRandomFromSet(roads);
+        } else { // LEAVE
+            // select among the neighbours with travel time-normalised probabilities
+            options.clear(); // clear previous choice options
+            for (int j=0; j<clusters.size(); j++) {
+                if (map.simulator.probabilityTable.Matrix[j][c.id] > 0 && j != c.id) { // Consider non-zero probabilities
+                    // get travel time to a random road in each neighbouring cluster
+                    long tt = map.travelTimeBetween(currentLocation.road.to, choiceModel.getRandomFromSet(clusters.get(j).roads).to);
+                    options.put(j, map.simulator.probabilityTable.Matrix[j][c.id] * 1000 / (tt + 0.1));
+                }
+            }
+            dest = clusters.get(choiceModel.choiceByProbability(options));
+            destinationRoad = choiceModel.getRandomFromSet(dest.roads);
         }
 
         // the agent is dispatched to the end (intersection) of the destination road
         Intersection sourceIntersection = currentLocation.road.to;
         Intersection destinationIntersection = destinationRoad.to;
-
-//        int destination_cluster_id = ct.getClusterFromRoad(destinationRoad).id;
-        // design_to_go[destination_cluster_id] += 1;
-//        planned_destination_cluster = destination_cluster_id;
 
         if (sourceIntersection == destinationIntersection) {
             // destination cannot be the source
@@ -205,21 +210,24 @@ public class AgentIndependent extends BaseAgent {
         route = map.bestCrusiseTimePath(sourceIntersection, destinationIntersection);
 //        route = map.shortestTravelTimePath(sourceIntersection, destinationIntersection);
 
-//        timer = 0;
-//        prevTime = currentTime;
-//        failed = true;
-//        canpickup = false; // modify "canpickup" here and in the "nextIntersection" method to limit pick-up locations
+        originCluster = c.id;
+        destCluster = dest.id;
         route.poll();
     }
 
     @Override
     public Intersection nextIntersection(LocationOnRoad currentLocation, long currentTime) {
-//        if (route.size() != 0) { // ORIGINAL condition
-        if (route.size() != 0 && tableVersion == map.simulator.probabilityTable.Version) {
-            // Route is not empty, take the next intersection.
+        if (route.size() != 0) { // ORIGINAL condition
+//        if (route.size() != 0 && tableVersion == map.simulator.probabilityTable.Version) {
+//             Route is not empty, take the next intersection.
             Intersection nextIntersection = route.poll();
             return nextIntersection;
         } else {
+            if (tableVersion != map.simulator.probabilityTable.Version && ct.getClusterFromRoad(currentLocation.road).id != destCluster) {
+                map.simulator.matrixC[destCluster][originCluster]++;
+            } else {
+                map.simulator.matrixB[destCluster][originCluster]++;
+            }
             // Finished the planned route. Plan a new route.
             planSearchRoute(currentLocation, currentTime);
             return route.poll();
@@ -228,10 +236,7 @@ public class AgentIndependent extends BaseAgent {
 
     @Override
     public void assignedTo(LocationOnRoad currentLocation, long currentTime, long resourceId, LocationOnRoad resourcePickupLocation, LocationOnRoad resourceDropoffLocation) {
-//        timer = 0;
-//        prevTime = -1;
-//        failed = false;
-
+        map.simulator.matrixA[destCluster][originCluster]++;
         route.clear();
     }
 }

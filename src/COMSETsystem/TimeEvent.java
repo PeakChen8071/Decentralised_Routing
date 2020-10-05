@@ -65,7 +65,7 @@ public class TimeEvent extends Event {
             triggerInterval = 300;
 
             int totalClusterSize = simulator.clusterSet.size();
-            int agentSize = 2500; // Fixed guess fleet size
+            int agentSize = 2000; // Fixed guess fleet size
 //            int agentSize = simulator.emptyAgents.size();
 //            System.out.println(agentSize);
 
@@ -76,8 +76,64 @@ public class TimeEvent extends Event {
             writer2.write(sb2);
             writer2.close();
 
+            // Validation of transition M
+            if (version >= 8 && version <= 10) {
+                FileWriter fw3;
+                BufferedWriter writer3;
+                StringBuilder output;
+
+                // matrix A, successful assignment
+                fw3 = new FileWriter(new File("Resource and Expiration Results/Matrix " + version + "A.csv"));
+                writer3 = new BufferedWriter(fw3);
+                output = new StringBuilder();
+                for (int i=0; i<simulator.matrixA.length; i++) {
+                    for (int j=0; j<simulator.matrixA[0].length; j++) {
+                        output.append(simulator.matrixA[i][j]);
+                        if (j!=simulator.matrixA[0].length - 1) output.append(",");
+                    }
+                    output.append("\n");
+                }
+                writer3.write(output.toString());
+                writer3.close();
+
+                // matrix B, unsuccessful assignment inside destination cluster
+                fw3 = new FileWriter(new File("Resource and Expiration Results/Matrix " + version + "B.csv"));
+                writer3 = new BufferedWriter(fw3);
+                output = new StringBuilder();
+                for (int i=0; i<simulator.matrixB.length; i++) {
+                    for (int j=0; j<simulator.matrixB[0].length; j++) {
+                        output.append(simulator.matrixB[i][j]);
+                        if (j!=simulator.matrixB[0].length - 1) output.append(",");
+                    }
+                    output.append("\n");
+                }
+                writer3.write(output.toString());
+                writer3.close();
+
+                // matrix C, unsuccessful assignment outside destination cluster
+                fw3 = new FileWriter(new File("Resource and Expiration Results/Matrix " + version + "C.csv"));
+                writer3 = new BufferedWriter(fw3);
+                output = new StringBuilder();
+                for (int i=0; i<simulator.matrixC.length; i++) {
+                    for (int j=0; j<simulator.matrixC[0].length; j++) {
+                        output.append(simulator.matrixC[i][j]);
+                        if (j!=simulator.matrixC[0].length - 1) output.append(",");
+                    }
+                    output.append("\n");
+                }
+                writer3.write(output.toString());
+                writer3.close();
+            }
+            simulator.matrixA = new int[totalClusterSize][totalClusterSize];
+            simulator.matrixB = new int[totalClusterSize][totalClusterSize];
+            simulator.matrixC = new int[totalClusterSize][totalClusterSize];
+
             // Estimate resources in Python optimiser
-            FileWriter fw = new FileWriter(new File("Optimiser IO/input.csv"), true);
+            File f = new File("Optimiser IO/input.csv");
+            if (f.exists()) {
+                f.delete();
+            }
+            FileWriter fw = new FileWriter(f, true);
             BufferedWriter writer = new BufferedWriter(fw);
             String sb;
             if (simulator.probabilityTable.Version == 0) {
@@ -91,8 +147,14 @@ public class TimeEvent extends Event {
             writer.close();
 
             // Run Python Optimiser and fetch output matrix as probability table
-            ProcessBuilder pb = new ProcessBuilder("python", "S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\src\\UserExamples\\Optimiser.py");
-            pb.start().waitFor();
+            Process p = new ProcessBuilder("python", "/Users/linjichen/IdeaProjects/Decentralised_Routing/src/UserExamples/Optimiser.py").start();
+            p.waitFor();
+            int len;
+            if ((len = p.getErrorStream().available()) > 0) {
+                byte[] buf = new byte[len];
+                p.getErrorStream().read(buf);
+                System.err.println("Command error:\t\"" + new String(buf) + "\"");
+            }
 
 //        int T = 0;
 //        while (T < 60) {
@@ -178,7 +240,7 @@ public class TimeEvent extends Event {
 
     @Override
     Event trigger() throws Exception {
-//        if (this.time + triggerInterval < simulator.simulationBeginTime + simulator.WarmUpTime) {
+        // if (this.time + triggerInterval < simulator.simulationBeginTime + simulator.WarmUpTime) {
         if (this.time + triggerInterval < simulator.simulationEndTime) {
             return new TimeEvent(time + triggerInterval, simulator);
         } else {
