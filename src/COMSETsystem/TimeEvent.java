@@ -1,6 +1,7 @@
 package COMSETsystem;
 
 
+import DataParsing.Resource;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.interfaces.MatchingAlgorithm;
 import org.jgrapht.alg.matching.MaximumWeightBipartiteMatching;
@@ -21,6 +22,7 @@ public class TimeEvent extends Event {
         super(time, simulator);
 
         if (time < simulator.simulationBeginTime + simulator.WarmUpTime) {
+//        if (time < simulator.simulationEndTime) {
             // Central matching during simulation warm-up
             triggerInterval = 10;
 
@@ -29,10 +31,11 @@ public class TimeEvent extends Event {
             Graph<Event, DefaultWeightedEdge> g = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
             Set<Event> agentPartition = new HashSet<>();
             Set<Event> resourcePartition = new HashSet<>();
+
             for (AgentEvent a: agents) {
                 for (ResourceEvent r : resources) {
                     long eta = simulator.map.travelTimeBetween(a.loc, r.pickupLoc);
-                    if (eta < simulator.ResourceMaximumLifeTime) {
+                    if (time < r.expirationTime && eta <= simulator.ResourceMaximumLifeTime) {
                         DefaultWeightedEdge e = new DefaultWeightedEdge();
                         if (!g.containsVertex(a)) {
                             g.addVertex(a);
@@ -47,7 +50,7 @@ public class TimeEvent extends Event {
                     }
                 }
             }
-    //            simulator.waitingResources.removeAll(expiredEvents);
+
             //        System.out.println("Number of agent"+agents.size());
             //        System.out.println("Number of resources"+resourceEvents.size());
             MaximumWeightBipartiteMatching matchObject = new MaximumWeightBipartiteMatching(g, agentPartition, resourcePartition);
@@ -77,10 +80,7 @@ public class TimeEvent extends Event {
             writer2.close();
 
             // Validation of transition M
-            simulator.matrixA = new int[totalClusterSize][totalClusterSize];
-            simulator.matrixB = new int[totalClusterSize][totalClusterSize];
-            simulator.matrixC = new int[totalClusterSize][totalClusterSize];
-            if (version >= 13 && version <= 15) {
+            if (version >= 4 && version <= 6) {
                 FileWriter fw3;
                 BufferedWriter writer3;
                 StringBuilder output;
@@ -127,24 +127,40 @@ public class TimeEvent extends Event {
                 writer3.write(output.toString());
                 writer3.close();
             }
+            simulator.matrixA = new int[totalClusterSize][totalClusterSize];
+            simulator.matrixB = new int[totalClusterSize][totalClusterSize];
+            simulator.matrixC = new int[totalClusterSize][totalClusterSize];
 
-            // Estimate resources in Python optimiser
-            FileWriter fw = new FileWriter(new File("Optimiser IO/input.csv"), true);
-            BufferedWriter writer = new BufferedWriter(fw);
-            String sb;
-            if (simulator.probabilityTable.Version == 0) {
-                sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
-                    agentSize + "\n" +
-                    "hashcode," + version;
-            } else {
-                sb = agentSize + "\n" + "hashcode," + version;
-            }
-            writer.write(sb);
-            writer.close();
+//             Estimate resources in Python optimiser
+//            FileWriter fw = new FileWriter(new File("Optimiser IO/input.csv"), true);
+//            BufferedWriter writer = new BufferedWriter(fw);
+//            String sb;
+//            if (simulator.probabilityTable.Version == 0) {
+//                sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
+//                    agentSize + "\n" +
+//                    "hashcode," + version;
+//            } else {
+//                sb = agentSize + "\n" + "hashcode," + version;
+//            }
+//            writer.write(sb);
+//            writer.close();
+
+//            total number of assignments: 25083
+//            resource expiration percentage: 30%
+//            average agent search time: 3076 seconds
+//            average resource wait time: 251 seconds
+//            FileWriter fw = new FileWriter(new File("Optimiser IO/input.csv"));
+//            BufferedWriter writer = new BufferedWriter(fw);
+//            String sb;
+//            sb = simulator.clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n" +
+//                    agentSize + "\n" +
+//                    "hashcode," + version;
+//            writer.write(sb);
+//            writer.close();
 
             // Run Python Optimiser and fetch output matrix as probability table
-            ProcessBuilder pb = new ProcessBuilder("python", "S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\src\\UserExamples\\Optimiser.py");
-            pb.start().waitFor();
+//            ProcessBuilder pb = new ProcessBuilder("python", "S:\\USYD\\Research\\Decentralised Cruising\\Taxi\\src\\UserExamples\\Optimiser.py");
+//            pb.start().waitFor();
 
 //        int T = 0;
 //        while (T < 60) {
@@ -188,36 +204,49 @@ public class TimeEvent extends Event {
         return false;
     }
 
-    private void AssignAgentToResource(AgentEvent a, ResourceEvent r) {
+    private void AssignAgentToResource(AgentEvent a, ResourceEvent r) throws IOException {
 
-//        long travelTimeToEndIntersection = a.time - r.time;
-//        long travelTimeFromStartIntersection = a.loc.road.travelTime - travelTimeToEndIntersection;
-//        LocationOnRoad agentLocationOnRoad = new LocationOnRoad(a.loc.road, travelTimeFromStartIntersection);
+        long cruiseTime = time - a.startSearchTime;
+        long approachTime = simulator.map.travelTimeBetween(a.loc, r.pickupLoc);
+        long searchTime = cruiseTime + approachTime;
+        long waitTime = time + approachTime - r.availableTime;
 
-//        long cruiseTime = time - a.startSearchTime;
-//        long approachTime = simulator.map.travelTimeBetween(a.loc, r.pickupLoc);
-//        long searchTime = cruiseTime + approachTime;
-//        long waitTime = time + approachTime - r.availableTime;
+        if (waitTime > simulator.ResourceMaximumLifeTime) {
+            r.expireHandler(); // MODIFICATION: Matched resource can still expire
+        } else {
+            if (r.availableTime >= simulator.simulationBeginTime + simulator.WarmUpTime) {
+                simulator.totalAgentCruiseTime += cruiseTime;
+                simulator.totalAgentApproachTime += approachTime;
+                simulator.totalAgentSearchTime += searchTime;
+                simulator.totalResourceWaitTime += waitTime;
+                simulator.totalResourceTripTime += r.tripTime;
+                simulator.centralAssignments++;
 
-//        simulator.totalAgentCruiseTime += cruiseTime;
-//        simulator.totalAgentApproachTime += approachTime;
-////        simulator.totalAgentSearchTime += searchTime;
-//        simulator.totalResourceWaitTime += waitTime;
-//        simulator.totalResourceTripTime += r.tripTime;
-        simulator.centralAssignments++;
+                FileWriter fw2 = new FileWriter("Resource and Expiration Results/resourceWaitingTime.csv", true);
+                PrintWriter pw2 = new PrintWriter(fw2);
+                pw2.write(waitTime + "\n");
+                pw2.close();
+            }
 
-        // Inform the assignment to the agent.
-        a.assignedTo(a.loc, time, id, r.pickupLoc, r.dropoffLoc);
+            // Inform the assignment to the agent.
+            a.assignedTo(a.loc, time, id, r.pickupLoc, r.dropoffLoc);
 
-        // "Label" the agent as occupied.
-        simulator.emptyAgents.remove(a);
-        simulator.events.remove(a);
-        simulator.waitingResources.remove(r);
-        simulator.events.remove(r);
+//        // keep a record of meetings
+//        String meetingLogName = simulator.meetingLogName;
+//        FileWriter fw3 = new FileWriter(meetingLogName, true);
+//        PrintWriter pw3 = new PrintWriter(fw3);
+//        pw3.write((time + approachTime) + "," + r.pickupLoc.road.id + "\n");
+//        pw3.close();
+
+            // "Label" the agent as occupied.
+            simulator.emptyAgents.remove(a);
+            simulator.events.remove(a);
+            simulator.waitingResources.remove(r);
+            simulator.events.remove(r);
 //        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Assigned to agent id = " + a.id + " currently at " + a.loc, this);
 
-        a.setEvent(time + simulator.map.travelTimeBetween(a.loc, r.pickupLoc) + r.tripTime, r.dropoffLoc, AgentEvent.DROPPING_OFF);
-        simulator.events.add(a);
+            a.setEvent(time + simulator.map.travelTimeBetween(a.loc, r.pickupLoc) + r.tripTime, r.dropoffLoc, AgentEvent.DROPPING_OFF);
+            simulator.events.add(a);
 
 //        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "From agent to resource = " + approachTime + " seconds.", this);
 //        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "From pickupLoc to dropoffLoc = " + r.tripTime + " seconds.", this);
@@ -226,11 +255,12 @@ public class TimeEvent extends Event {
 //        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "search time = " + searchTime + " seconds.", this);
 //        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "wait time = " + waitTime + " seconds.", this);
 //        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Next agent trigger time = " + a.time, this);
+        }
     }
 
     @Override
     Event trigger() throws Exception {
-//        if (this.time + triggerInterval < simulator.simulationBeginTime + simulator.WarmUpTime) {
+//        if (this.time + triggerInterval < simulator.simulationBeginTime + simulator.WarmUpTime) { // Only warm-up
         if (this.time + triggerInterval < simulator.simulationEndTime) {
             return new TimeEvent(time + triggerInterval, simulator);
         } else {

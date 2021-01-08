@@ -7,6 +7,8 @@ import csv
 def findV(ListR, TotalV, hashCode):
     n = len(ListR)
     GAMMA1 = 0.354183; GAMMA2 = 0.147688 # 39 clusters
+    #GAMMA1 = 0.434791; GAMMA2 = 0.150122 # 10 min
+    #GAMMA1 = 0.482180; GAMMA2 = 0.134983 # 15 min
     Alpha = [0] * n
     df = pd.read_csv('S:/USYD/Research/Decentralised Cruising/Taxi/ClusterData/cluster_alpha (39 clusters).csv', header=None)
     for i in df.index:
@@ -23,17 +25,18 @@ def findV(ListR, TotalV, hashCode):
     bounds = scipy.optimize.Bounds([0] * n, [TotalV] * n)
 
     res = scipy.optimize.minimize(f, x0, method='SLSQP', constraints=[eq_cons],
-                                  options={'ftol': 1e-9, 'maxiter': 100 * len(x0)}, bounds=bounds)
+                                  options={'maxiter': 100*len(x0)}, bounds=bounds)
 
     # Estimate from historical resource pattern. Use columns AFTER simulation warm-up
     historicalR = pd.read_csv('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/historical_R (39 clusters).csv', header=None, usecols=[hashCode+11], squeeze=True).values
+    #historicalR = pd.read_csv('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/historical_R (10 min).csv', header=None, usecols=[hashCode+5], squeeze=True).values
     newR = ListR + historicalR - np.multiply(np.multiply(Alpha, np.power(ListR, GAMMA1)), np.power(res.x, GAMMA2))
     newR[newR < 0] = 0
     np.savetxt('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/input.csv', newR.reshape(1, newR.shape[0]), fmt='%.9f', delimiter=',')
     with open("S:/USYD/Research/Decentralised Cruising/Taxi/Resource and Expiration Results/Estimated R.csv", "a", newline='') as fp:
         wr = csv.writer(fp)
         wr.writerow(list(newR))
-    return res.x
+    return res.x / sum(res.x)
 
 
 def findM(eigenVector):
@@ -41,7 +44,7 @@ def findM(eigenVector):
     ub = []
     df = pd.read_csv('S:/USYD/Research/Decentralised Cruising/Taxi/ClusterData/cluster_min=50_max=500_alpha=-0.001_nb.csv', index_col='cluster_id')
     for i in df.index.sort_values():
-        adjacency = [1e-10] * n
+        adjacency = [0] * n
         for j in df.loc[i].str.split()[0]:
             adjacency[i] = 1
             adjacency[int(j)] = 1
@@ -53,13 +56,13 @@ def findM(eigenVector):
     eq_cons = {'type': 'eq',
                'fun': lambda x: np.array([x.reshape(n, n)[:, i].sum() - 1 for i in range(n)])}
 
-    x0 = [1 / n] * n * n
+    x0 = [upper/n for upper in ub]
 
     bounds = scipy.optimize.Bounds([0]*n*n, ub)
     #bounds = scipy.optimize.Bounds([0]*n*n, [1]*n*n)
 
     res = scipy.optimize.minimize(f, x0, method='SLSQP', constraints=[eq_cons],
-                                  options={'ftol': 1e-9, 'maxiter': 100 * len(x0)}, bounds=bounds)
+                                  options={'ftol':1e-5, 'maxiter':10*len(x0)}, bounds=bounds)
     return res.x
 
 
@@ -69,7 +72,7 @@ V = int(javaDf.iloc[1, 0])
 hashCode = int(javaDf.iloc[2, 1])
     
 np.savetxt('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/output_{}.csv'.format(hashCode),
-            findM(findV(R, V, hashCode)).reshape(len(R), len(R)), fmt='%.9f', delimiter=',')
+            findM(findV(R, V, hashCode)).reshape(len(R), len(R)), delimiter=',')
 
 with open('S:/USYD/Research/Decentralised Cruising/Taxi/Optimiser IO/output_{}.csv'.format(hashCode),'a') as fd:
     fd.write('hashcode,{}'.format(hashCode))

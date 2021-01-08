@@ -29,42 +29,28 @@ public class ChoiceModel {
 
     // choice based on normal probability, e.g. p(i) = A(i) / sum(A(j)) where j are elements in the choice set
     public <T> T choiceByProbability(HashMap<T, Double> probTable){
-//        allCounter++;
-//        if(allCounter%100000==0){
-//            System.out.println("% choosen using eps : "+ eps+" = "+(double)choosenCounter/allCounter);
-//        }
-        T largest = null;
-        double largestVal = -1.0;
         List<Map.Entry<T,Double>> rangeAxis = new ArrayList<>();
-        //calculate cumulative average speed of roads
+
         double totalWeight = 0;
 
-        // the largest probability and corresponding cluster ID
         for (T itx: probTable.keySet()) {
             Map.Entry<T, Double> pair = new AbstractMap.SimpleEntry<>(itx, probTable.get(itx));
             rangeAxis.add(pair);
             double val = pair.getValue();
             totalWeight += val;
-            if(largestVal < val){
-                largestVal = val;
-                largest = itx;
-            }
         }
 
         int randomIndex = -1;
         double random = Math.random() * totalWeight;
 
-        for (int i = 0; i < rangeAxis.size(); ++i)
-        {
+        for (int i=0; i < rangeAxis.size(); i++) {
             random -= rangeAxis.get(i).getValue();
-            if (random <= 0.0d)
-            {
+            if (random <= 0d) {
                 randomIndex = i;
                 break;
             }
         }
         T destination = rangeAxis.get(randomIndex).getKey();
-        if (largest.equals(destination)) choosenCounter++; // how many times the most attractive cluster is chosen
         return destination;
     }
 

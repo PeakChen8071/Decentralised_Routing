@@ -32,9 +32,9 @@ public class Simulator {
 	public HashSet<Integer> clusterSet;
 	public TreeMap<Integer, Integer> clusterResourceCount;
 	public ProbabilityMatrix probabilityTable;
-	public int[][] matrixA;
-	public int[][] matrixB;
-	public int[][] matrixC;
+	public int[][] matrixA = null;
+	public int[][] matrixB = null;
+	public int[][] matrixC = null;
 	public int WarmUpTime;
 
 //	// The output file names to record relevant resource information
@@ -174,9 +174,6 @@ public class Simulator {
 			}
 		}
 		this.probabilityTable = new ProbabilityMatrix(clusterSet.size());
-		matrixA = new int[clusterSet.size()][clusterSet.size()];
-		matrixB = new int[clusterSet.size()][clusterSet.size()];
-		matrixC = new int[clusterSet.size()][clusterSet.size()];
 
 		this.clusterResourceCount = new TreeMap<>();
 
@@ -248,34 +245,34 @@ public class Simulator {
 		}
 
 		// CREATE LOG FILES ONLY ONCE!!!
-//		String agentLogName = "Resource and Expiration Results/08_28_Agents.csv";
+//		String agentLogName = "Resource and Expiration Results/11_28_Agents.csv";
 //		FileWriter fw = new FileWriter(agentLogName);
 //		PrintWriter pw = new PrintWriter(fw);
 //		pw.write("time,empty_agents,waiting_resources\n");
 //		pw.close();
 
-//		resourceLogName = "Resource and Expiration Results/08_28_Resources.csv";
+//		resourceLogName = "Resource and Expiration Results/11_28_Resources.csv";
 //		FileWriter fw1 = new FileWriter(resourceLogName);
 //		PrintWriter pw1 = new PrintWriter(fw1);
 //		pw1.write("time,new_resource\n");
 //		pw1.close();
 
-//		expirationLogName = "Resource and Expiration Results/08_28_Expiration.csv";
+//		expirationLogName = "Resource and Expiration Results/11_28_Expiration.csv";
 //		FileWriter fw2 = new FileWriter(expirationLogName);
 //		PrintWriter pw2 = new PrintWriter(fw2);
 //		pw2.write("time,expiration\n");
 //		pw2.close();
 
-//		meetingLogName = "Resource and Expiration Results/08_28_Meeting.csv";
+//		meetingLogName = "Resource and Expiration Results/11_28_Meeting.csv";
 //		FileWriter fw3 = new FileWriter(meetingLogName);
 //		PrintWriter pw3 = new PrintWriter(fw3);
 //		pw3.write("time,meeting\n");
 //		pw3.close();
 
-		FileWriter fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv");
+		FileWriter fw = new FileWriter("Resource and Expiration Results/totalV_totalE_and_Ri.csv", true);
 		PrintWriter pw = new PrintWriter(fw);
 		StringBuilder sb = new StringBuilder();
-		sb.append("time,").append("totalAgentSize,");
+		sb.append("time,").append("totalAgentSize,").append("totalExpiration,");
 		for (int i=0; i<clusterSet.size(); i++) {
 			sb.append(i);
 			if (i != clusterSet.size() - 1) sb.append(",");
@@ -286,7 +283,7 @@ public class Simulator {
 		try (ProgressBar pb = new ProgressBar("Progress:", 100, ProgressBarStyle.ASCII)) {
 			simulationBeginTime = events.peek().time;
 			events.add(new TimeEvent(simulationBeginTime, this));
-			long recordTime = simulationBeginTime + WarmUpTime - 1;
+			long recordTime = simulationBeginTime;
 
 			while (events.peek().time <= simulationEndTime) {
 
@@ -297,9 +294,9 @@ public class Simulator {
 				}
 
 				if (recordTime < events.peek().time) {
-					fw = new FileWriter("Resource and Expiration Results/totalV_and_Ri.csv", true);
+					fw = new FileWriter("Resource and Expiration Results/totalV_totalE_and_Ri.csv", true);
 					pw = new PrintWriter(fw);
-					pw.write(events.peek().time + "," + emptyAgents.size() + ","
+					pw.write(events.peek().time + "," + emptyAgents.size() + "," + expiredResources + ","
 							+ clusterResourceCount.values().toString().replaceAll("[\\[\\]]", "") + "\n");
 					pw.close();
 					recordTime = events.peek().time;
@@ -426,15 +423,17 @@ public class Simulator {
 					totalRemainTime += (simulationEndTime - ae.startSearchTime);
 				}
 
-//				sb.append("number of central matching: ").append(centralAssignments).append("\n");
-				sb.append("total number of assignments: ").append(totalAssignments).append("\n");
+//				sb.append("total number of assignments: ").append(totalAssignments).append("\n");
+				sb.append("total number of assignments: ").append(totalAssignments + centralAssignments).append("\n"); // Central Matching
 				sb.append("resource expiration percentage: ").append(Math.floorDiv(expiredResources * 100, (decentralisedResources - waitingResources.size()))).append("%\n");
 				sb.append("average agent search time: ").append(Math.floorDiv(totalAgentSearchTime + totalRemainTime, totalAgents)).append(" seconds \n");
-				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, (decentralisedResources - waitingResources.size()))).append(" seconds \n");
+//				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, (decentralisedResources - waitingResources.size()))).append(" seconds \n");
+				sb.append("average resource wait time: ").append(Math.floorDiv(totalResourceWaitTime, (totalAssignments + centralAssignments + expiredResources))).append(" seconds \n");
 				sb.append("\n");
 //				sb.append("average agent cruise time: ").append(Math.floorDiv(totalAgentCruiseTime, totalAssignments)).append(" seconds \n");
 //				sb.append("average agent approach time: ").append(Math.floorDiv(totalAgentApproachTime, totalAssignments)).append(" seconds \n");
 //				sb.append("average resource trip time: ").append(Math.floorDiv(totalResourceTripTime, totalAssignments)).append(" seconds \n");
+				sb.append("total resource expiration: ").append(expiredResources);
 			} else {
 				sb.append("No resources.\n");
 			}
